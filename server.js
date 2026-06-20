@@ -230,7 +230,7 @@ app.post('/api/auth/signin', rateLimit(10, 60000), async (req, res) => {
       used:     user.scripts_used || 0,
       platform: user.preferred_platform || 'instagram',
       tone:     user.preferred_tone     || 'bold_educative',
-      industry: user.preferred_industry || '',
+      industry: (user.preferred_industry && !user.preferred_industry.includes('@')) ? user.preferred_industry : '',
       createdAt: Date.now(),
     });
     setTimeout(() => sessions.delete(token), SESSION_TTL);
@@ -333,7 +333,8 @@ app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
     user.used++;
     if (platform) user.platform = platform;
     if (tone)     user.tone     = tone;
-    if (industry) user.industry = industry;
+    // Never save email addresses as industry (data corruption guard)
+    if (industry && !industry.includes('@')) user.industry = industry;
     // Update usage in Supabase
     sb('PATCH', 'rs_users', {
       filter: `email=eq.${encodeURIComponent(user.email)}`,
