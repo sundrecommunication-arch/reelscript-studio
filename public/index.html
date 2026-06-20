@@ -1302,28 +1302,52 @@ function updateNavAuth() {
   if (S.user) {
     const display = S.user.email ? S.user.email.split('@')[0] : 'User';
     const email   = S.user.email || '';
-    const planLabel = isPaid ? '⭐ Pro Account' : 'Free Plan';
-    const planClass = isPaid ? 'pro' : 'free';
 
-    area.innerHTML = `
-      <div class="user-menu-wrap" id="user-menu-wrap">
-        ${isPaid ? `<span class="pro-badge" style="margin-right:4px;">⭐ PRO</span>` : `<button class="nav-auth-btn accent" onclick="openUpgrade();event.stopPropagation();" style="margin-right:4px;">⬆ Upgrade</button>`}
-        <button class="user-menu-btn" onclick="toggleUserMenu(event)">
-          👤 ${display} ▾
-        </button>
-        <div class="user-dropdown" id="user-dropdown">
-          <div class="user-dropdown-header">
-            <div class="user-dropdown-email">${email}</div>
-            <div class="user-dropdown-plan ${planClass}">${planLabel}</div>
+    if (isPaid) {
+      // PRO badge is OUTSIDE the dropdown — clicking it opens account info modal
+      // Username button is SEPARATE and opens the dropdown
+      area.innerHTML = `
+        <span class="pro-badge" onclick="showProInfo()" title="Pro Account — click for details">⭐ PRO</span>
+        <div class="user-menu-wrap" id="user-menu-wrap">
+          <button class="user-menu-btn" onclick="toggleUserMenu(event)">
+            👤 ${display} ▾
+          </button>
+          <div class="user-dropdown" id="user-dropdown">
+            <div class="user-dropdown-header">
+              <div class="user-dropdown-email">${email}</div>
+              <div class="user-dropdown-plan pro">⭐ Pro Account — Unlimited</div>
+            </div>
+            <div class="user-dropdown-item" onclick="mTab('library');closeUserMenu();">📚 My Scripts</div>
+            <div class="user-dropdown-item danger" onclick="signOut();">🚪 Sign Out</div>
           </div>
-          ${!isPaid ? `<div class="user-dropdown-item" onclick="openUpgrade();closeUserMenu();">⭐ Upgrade to Pro</div>` : ''}
-          <div class="user-dropdown-item" onclick="mTab('library');closeUserMenu();">📚 My Scripts</div>
-          <div class="user-dropdown-item danger" onclick="signOut();">🚪 Sign Out</div>
-        </div>
-      </div>`;
+        </div>`;
+    } else {
+      // Free user — Upgrade button separate from user menu
+      area.innerHTML = `
+        <button class="nav-auth-btn accent" onclick="openUpgrade();" style="background:var(--accent);border-color:var(--accent);">⬆ Upgrade</button>
+        <div class="user-menu-wrap" id="user-menu-wrap">
+          <button class="user-menu-btn" onclick="toggleUserMenu(event)">
+            👤 ${display} ▾
+          </button>
+          <div class="user-dropdown" id="user-dropdown">
+            <div class="user-dropdown-header">
+              <div class="user-dropdown-email">${email}</div>
+              <div class="user-dropdown-plan free">Free Plan — ${S.profile?.scripts_used_this_month||0}/10 scripts</div>
+            </div>
+            <div class="user-dropdown-item" onclick="openUpgrade();closeUserMenu();">⭐ Upgrade to Pro</div>
+            <div class="user-dropdown-item" onclick="mTab('library');closeUserMenu();">📚 My Scripts</div>
+            <div class="user-dropdown-item danger" onclick="signOut();">🚪 Sign Out</div>
+          </div>
+        </div>`;
+    }
   } else {
     area.innerHTML = `<button class="nav-auth-btn" onclick="openAuth('login')" data-t="signin">Sign in</button>`;
   }
+}
+
+// Pro badge click — show a quick info toast
+function showProInfo() {
+  showToast('⭐ You are on Pro — unlimited scripts, all platforms & languages!');
 }
 
 function toggleUserMenu(e) {
