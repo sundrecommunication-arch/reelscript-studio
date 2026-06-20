@@ -148,12 +148,14 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .ind-input{width:100%;border:1.5px solid var(--border);border-radius:var(--r);padding:11px 14px;font-size:0.88rem;background:var(--paper);color:var(--ink);transition:border-color .15s;}
 .ind-input:focus{outline:none;border-color:var(--accent);}
 .ind-input::placeholder{color:#AAA;}
-.ind-suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);z-index:50;display:none;overflow:hidden;max-height:220px;overflow-y:auto;}
+.ind-suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:200;display:none;overflow:hidden;max-height:260px;overflow-y:auto;}
 .ind-suggestions.open{display:block;}
-.ind-item{padding:10px 14px;font-size:0.84rem;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;}
+.ind-item{padding:13px 14px;font-size:0.88rem;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;line-height:1.3;}
 .ind-item:last-child{border-bottom:none;}
-.ind-item:hover{background:var(--paper);}
+.ind-item:hover,.ind-item:active{background:var(--paper);}
 .ind-item em{color:var(--accent);font-style:normal;font-weight:600;}
+/* Ensure ind-wrap stacks above accordion */
+.step-card.open .ind-wrap { position:relative; z-index:200; }
 
 .chip-row{display:flex;flex-wrap:wrap;gap:7px;}
 .chip{border:1.5px solid var(--border);background:var(--paper);border-radius:100px;padding:7px 14px;font-size:0.78rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;}
@@ -270,9 +272,9 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .step-card.done .step-sel{display:block;}
 .step-chev{color:var(--muted);font-size:0.8rem;transition:transform .25s;flex-shrink:0;}
 .step-card.open .step-chev{transform:rotate(180deg);}
-.step-body{max-height:0;overflow:hidden;transition:max-height .32s ease;}
-.step-card.open .step-body{max-height:700px;}
-.step-body-in{padding:0 14px 16px;}
+.step-body{max-height:0;overflow:visible;transition:max-height .32s ease;}
+.step-card.open .step-body{max-height:700px;overflow:visible;}
+.step-body-in{padding:0 14px 16px;overflow:visible;}
 
 .m-gen-bar{position:fixed;bottom:calc(var(--tab-h) + var(--safe-b));left:0;right:0;padding:10px 15px;background:linear-gradient(to top,var(--paper) 65%,transparent);z-index:100;}
 .tabbar{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tab-h) + var(--safe-b));background:var(--card);border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-b);z-index:200;}
@@ -481,21 +483,55 @@ textarea,input{font-family:'DM Sans',sans-serif;}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-head"><h3 id="auth-modal-title">Sign In</h3><span class="modal-close" onclick="closeModal('auth-modal')">✕</span></div>
     <div class="modal-body">
+
+      <!-- Step 1: Phone -->
       <div id="auth-step-phone">
         <div class="modal-error" id="auth-error"></div>
-        <div><div class="modal-label">Phone Number</div><input type="tel" class="modal-input" id="auth-phone" placeholder="08012345678 or +2348012345678"/></div>
-        <p style="font-size:0.74rem;color:var(--muted);margin-top:-8px;line-height:1.4;">Enter your Nigerian number. You can use <strong>0812...</strong> or <strong>+2348...</strong> format.</p>
-        <button class="modal-btn" id="auth-send-btn" onclick="sendOTP()">Send Verification Code</button>
-        <div class="modal-divider">or</div>
-        <div class="modal-note">By signing in you agree to our terms of service. Your data is encrypted and never shared.</div>
+        <div style="text-align:center;padding:4px 0 14px;">
+          <div style="font-size:2.2rem;margin-bottom:8px;">📱</div>
+          <p style="font-size:0.86rem;color:var(--muted);line-height:1.55;">Enter your Nigerian phone number to get a free verification code by SMS.</p>
+        </div>
+        <div>
+          <div class="modal-label">Phone Number</div>
+          <input type="tel" class="modal-input" id="auth-phone"
+            placeholder="08012345678 or +2348012345678"
+            style="font-size:1rem;padding:14px;"/>
+          <p style="font-size:0.74rem;color:var(--muted);margin-top:6px;line-height:1.45;">
+            ✓ Works with <strong>081...</strong> or <strong>+2348...</strong> format
+          </p>
+        </div>
+        <button class="modal-btn" id="auth-send-btn" onclick="sendOTP()" style="padding:15px;font-size:1rem;">
+          📨 Send Verification Code
+        </button>
+        <p style="text-align:center;font-size:0.72rem;color:var(--muted);margin-top:10px;line-height:1.5;">
+          🔒 Your data is encrypted and never shared.
+        </p>
       </div>
+
+      <!-- Step 2: OTP -->
       <div id="auth-step-otp" style="display:none;">
         <div class="modal-error" id="otp-error"></div>
-        <div class="modal-note" style="text-align:left;">We sent a 6-digit code to <strong id="auth-phone-display"></strong></div>
-        <div><div class="modal-label">Verification Code</div><input type="number" class="modal-input" id="auth-otp" placeholder="123456" maxlength="6"/></div>
-        <button class="modal-btn" id="auth-verify-btn" onclick="verifyOTP()">Verify & Sign In</button>
-        <button class="modal-btn secondary" onclick="backToPhone()" style="margin-top:4px;">← Change number</button>
+        <div style="text-align:center;padding:4px 0 16px;">
+          <div style="font-size:2.2rem;margin-bottom:8px;">💬</div>
+          <p style="font-size:0.86rem;color:var(--muted);line-height:1.55;">
+            Code sent to<br/>
+            <strong style="color:var(--ink);font-size:1rem;" id="auth-phone-display"></strong>
+          </p>
+        </div>
+        <div>
+          <div class="modal-label">Enter 6-digit Code</div>
+          <input type="number" class="modal-input" id="auth-otp"
+            placeholder="123456"
+            maxlength="6"
+            inputmode="numeric"
+            style="font-size:1.8rem;text-align:center;letter-spacing:0.15em;padding:16px;"/>
+        </div>
+        <button class="modal-btn" id="auth-verify-btn" onclick="verifyOTP()" style="padding:15px;font-size:1rem;margin-top:8px;">
+          ✅ Verify & Sign In
+        </button>
+        <button class="modal-btn secondary" onclick="backToPhone()" style="margin-top:6px;">← Change number</button>
       </div>
+
     </div>
   </div>
 </div>
@@ -1127,20 +1163,46 @@ function selectPlatform(id) {
 function onIndInput(pfx) {
   const val = document.getElementById(pfx+'-industry').value;
   S.industry = val;
-  if (pfx==='m') { document.getElementById('m-s2-sel').textContent=val.slice(0,24)+(val.length>24?'…':''); if(val.trim()) document.getElementById('m-s2').classList.add('done'); }
-  const re = new RegExp(val.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
-  const matches = INDUSTRIES.filter(s=>s.toLowerCase().includes(val.toLowerCase())).slice(0,6);
+  if (pfx==='m') {
+    document.getElementById('m-s2-sel').textContent = val.slice(0,24)+(val.length>24?'…':'');
+    if (val.trim()) document.getElementById('m-s2').classList.add('done');
+  }
+  showIndSuggestions(pfx, val);
+}
+function onIndFocus(pfx) {
+  const val = document.getElementById(pfx+'-industry').value;
+  showIndSuggestions(pfx, val);
+}
+function onIndBlur(pfx) {
+  // Longer delay on mobile to allow touch events to fire on suggestions
+  setTimeout(() => document.getElementById(pfx+'-industry-sugg').classList.remove('open'), 300);
+}
+function showIndSuggestions(pfx, val) {
   const box = document.getElementById(pfx+'-industry-sugg');
-  if (!val.trim()||!matches.length) { box.classList.remove('open'); return; }
-  box.innerHTML = matches.map(m=>`<div class="ind-item" onmousedown="pickInd('${pfx}','${m}')">${m.replace(re,'<em>$&</em>')}</div>`).join('');
+  if (!val || !val.trim()) { box.classList.remove('open'); return; }
+  const re = new RegExp(val.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi');
+  const matches = INDUSTRIES.filter(s => s.toLowerCase().includes(val.toLowerCase())).slice(0, 8);
+  if (!matches.length) { box.classList.remove('open'); return; }
+  // Use both ontouchstart and onclick for mobile + desktop
+  box.innerHTML = matches.map(m =>
+    `<div class="ind-item"
+      ontouchstart="pickInd('${pfx}','${m.replace(/'/g,"\\'")}');event.preventDefault();"
+      onclick="pickInd('${pfx}','${m.replace(/'/g,"\\'")}')">
+      ${m.replace(re,'<em>$&</em>')}
+    </div>`
+  ).join('');
   box.classList.add('open');
 }
-function onIndFocus(pfx) { onIndInput(pfx); }
-function onIndBlur(pfx) { setTimeout(()=>document.getElementById(pfx+'-industry-sugg').classList.remove('open'),180); }
 function pickInd(pfx, val) {
-  document.getElementById(pfx+'-industry').value = val; S.industry = val;
+  document.getElementById(pfx+'-industry').value = val;
+  S.industry = val;
   document.getElementById(pfx+'-industry-sugg').classList.remove('open');
-  if (pfx==='m') { document.getElementById('m-s2-sel').textContent=val; document.getElementById('m-s2').classList.add('done'); mStep('m-s3'); }
+  if (pfx==='m') {
+    document.getElementById('m-s2-sel').textContent = val;
+    document.getElementById('m-s2').classList.add('done');
+    // Small delay so touch event completes before advancing
+    setTimeout(() => mStep('m-s3'), 50);
+  }
 }
 
 /* ══════════════════════════════════════

@@ -27,7 +27,7 @@ loadEnv();
 
 const ANTHROPIC_API_KEY  = process.env.ANTHROPIC_API_KEY;
 const TERMII_API_KEY     = process.env.TERMII_API_KEY;
-const TERMII_SENDER_ID   = process.env.TERMII_SENDER_ID || 'ReelScript';
+const TERMII_SENDER_ID   = process.env.TERMII_SENDER_ID || 'N-Alert';
 const PAYSTACK_SECRET    = process.env.PAYSTACK_SECRET_KEY;
 const PAYSTACK_PLAN_CODE = process.env.PAYSTACK_PLAN_CODE;
 const APP_URL            = process.env.APP_URL || 'https://reelscript-studio-2.onrender.com';
@@ -130,7 +130,7 @@ app.post('/api/auth/send-otp', rateLimit(5, 60000), async (req, res) => {
         sms: `Your ReelScript verification code is: ${code}. Valid for 5 minutes. Do not share.`,
         type: 'plain',
         api_key: TERMII_API_KEY,
-        channel: 'generic',
+        channel: 'dnd',
       }),
     });
     const data = await resp.json();
