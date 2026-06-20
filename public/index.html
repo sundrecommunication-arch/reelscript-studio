@@ -80,6 +80,51 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .lang-option.active{color:var(--accent);font-weight:700;}
 .lang-option.active::after{content:'✓';font-size:0.8rem;}
 
+/* ── MOBILE PERFORMANCE ── */
+@media(max-width:799px){
+  /* Faster touch response */
+  button, .chip, .dur-btn, .plat-btn, .tab-btn, .step-hdr {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+  }
+  /* Reduce paint areas */
+  .m-scroll { will-change: scroll-position; }
+  /* Faster transitions on mobile */
+  .step-body { transition: max-height .22s ease; }
+  .step-card { transition: border-color .12s; }
+  /* Prevent font size adjustment on orientation change */
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  /* Smoother script output */
+  .sblock { break-inside: avoid; }
+  /* Bigger tap areas */
+  .tab-btn { min-height: 52px; }
+  .gen-btn { min-height: 56px; font-size: 1.05rem; }
+  /* Larger platform buttons on mobile */
+  .platform-grid { grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .plat-btn { padding: 12px 4px; }
+  .plat-icon { font-size: 1.5rem; }
+  .plat-name { font-size: 0.65rem; }
+  /* Bigger step headers */
+  .step-hdr { padding: 16px 14px; }
+  .step-title { font-size: 0.92rem; }
+  /* Bigger chips */
+  .chip { padding: 9px 16px; font-size: 0.82rem; }
+  /* Bigger duration buttons */
+  .dur-btn { padding: 12px 4px; font-size: 0.85rem; }
+  /* Bigger text inputs */
+  .ind-input, .ta, .modal-input { font-size: 16px !important; } /* prevents iOS zoom */
+  /* Script blocks more readable */
+  .sblock-text { font-size: 0.92rem; line-height: 1.8; }
+  /* Faster spinner */
+  .spinner { width: 36px; height: 36px; }
+  /* Panel padding */
+  .m-panel { padding: 16px 14px 0; }
+  /* Step body */
+  .step-body-in { padding: 0 12px 16px; }
+  /* Step number */
+  .step-num { width: 26px; height: 26px; font-size: 0.72rem; }
+}
+
 /* ── SKELETON LOADER ── */
 .skeleton{background:linear-gradient(90deg,#f0ece4 25%,#e8e4dc 50%,#f0ece4 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--r);}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -438,8 +483,8 @@ textarea,input{font-family:'DM Sans',sans-serif;}
     <div class="modal-body">
       <div id="auth-step-phone">
         <div class="modal-error" id="auth-error"></div>
-        <div><div class="modal-label">Phone Number</div><input type="tel" class="modal-input" id="auth-phone" placeholder="+2348012345678 (start with +234)"/></div>
-        <p style="font-size:0.75rem;color:var(--muted);margin-top:-8px;">⚠️ Use international format: <strong>+234</strong> then your number without the leading 0. Example: <strong>+2348169685553</strong></p>
+        <div><div class="modal-label">Phone Number</div><input type="tel" class="modal-input" id="auth-phone" placeholder="08012345678 or +2348012345678"/></div>
+        <p style="font-size:0.74rem;color:var(--muted);margin-top:-8px;line-height:1.4;">Enter your Nigerian number. You can use <strong>0812...</strong> or <strong>+2348...</strong> format.</p>
         <button class="modal-btn" id="auth-send-btn" onclick="sendOTP()">Send Verification Code</button>
         <div class="modal-divider">or</div>
         <div class="modal-note">By signing in you agree to our terms of service. Your data is encrypted and never shared.</div>
@@ -876,46 +921,48 @@ async function sendOTP() {
   if (!phone) { showAuthError('Please enter your phone number.'); return; }
 
   const btn = document.getElementById('auth-send-btn');
-  btn.disabled = true; btn.textContent = 'Sending…';
+  btn.disabled = true; btn.textContent = t('sending') || 'Sending…';
 
   try {
-    const res = await fetch(SUPABASE_URL+'/auth/v1/otp', {
-      method:'POST',
-      headers:{'apikey':SUPABASE_ANON,'Content-Type':'application/json'},
-      body: JSON.stringify({ phone, channel:'sms' })
+    const res = await fetch('/api/auth/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.msg || data.error_description || 'Failed to send OTP');
+    if (!res.ok) throw new Error(data.error || 'Failed to send code');
 
     document.getElementById('auth-step-phone').style.display = 'none';
     document.getElementById('auth-step-otp').style.display = 'block';
     document.getElementById('auth-phone-display').textContent = phone;
     document.getElementById('auth-modal-title').textContent = 'Enter Code';
+    if (data.dev) showToast('📱 Dev mode: check server console for OTP');
   } catch(err) {
     showAuthError(err.message);
   }
-  btn.disabled = false; btn.textContent = 'Send Verification Code';
+  btn.disabled = false; btn.textContent = t('sendCode') || 'Send Verification Code';
 }
 
 async function verifyOTP() {
   const phone = document.getElementById('auth-phone').value.trim();
-  const token = document.getElementById('auth-otp').value.trim();
-  if (!token) { showAuthError2('Please enter the code.'); return; }
+  const code  = document.getElementById('auth-otp').value.trim();
+  if (!code) { showAuthError2('Please enter the code.'); return; }
 
   const btn = document.getElementById('auth-verify-btn');
-  btn.disabled = true; btn.textContent = 'Verifying…';
+  btn.disabled = true; btn.textContent = t('verifying') || 'Verifying…';
 
   try {
-    const res = await fetch(SUPABASE_URL+'/auth/v1/verify', {
-      method:'POST',
-      headers:{'apikey':SUPABASE_ANON,'Content-Type':'application/json'},
-      body: JSON.stringify({ phone, token, type:'sms' })
+    const res = await fetch('/api/auth/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, code })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.msg || data.error_description || 'Invalid code');
+    if (!res.ok) throw new Error(data.error || 'Invalid code');
 
-    S.token = data.access_token;
-    S.user  = data.user;
+    // New server returns { token, phone }
+    S.token = data.token;
+    S.user  = { phone: data.phone };
     closeModal('auth-modal');
     await loadProfile();
     showToast('✅ Signed in successfully!');
@@ -923,7 +970,7 @@ async function verifyOTP() {
   } catch(err) {
     showAuthError2(err.message);
   }
-  btn.disabled = false; btn.textContent = 'Verify & Sign In';
+  btn.disabled = false; btn.textContent = t('verify') || 'Verify & Sign In';
 }
 
 function backToPhone() {
@@ -938,15 +985,16 @@ function showAuthError2(msg) { const el=document.getElementById('otp-error');   
 async function loadProfile() {
   if (!S.token) return;
   try {
-    const res = await fetch('/api/profile', { headers:{ 'Authorization':'Bearer '+S.token } });
+    const res = await fetch('/api/profile', {
+      headers: { 'Authorization': 'Bearer ' + S.token }
+    });
+    if (!res.ok) { S.token = null; S.user = null; return; }
     const data = await res.json();
-    if (data.profile) {
-      S.profile = data.profile;
-      applyPreferences();
-      updateNavAuth();
-      updateUsagePill();
-      loadLibrary();
-    }
+    // Server returns flat profile object directly
+    S.profile = data;
+    applyPreferences();
+    updateNavAuth();
+    updateUsagePill();
   } catch {}
 }
 
