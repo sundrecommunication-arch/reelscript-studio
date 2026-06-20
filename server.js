@@ -84,16 +84,47 @@ function sanitise(str, maxLen = 4000) {
 function sanitiseShort(str) { return sanitise(str, 200); }
 
 /* ════════════════════════════════
-   IN-MEMORY STORES
+   PERSISTENT USER STORE (file-backed)
+   Survives server restarts on Render
 ════════════════════════════════ */
+import { writeFileSync } from 'fs';
+
+const DB_PATH = path.join(__dirname, 'users.json');
+
+// Load existing users from disk on startup
+function loadUsers() {
+  try {
+    if (existsSync(DB_PATH)) {
+      const raw = readFileSync(DB_PATH, 'utf8');
+      const obj = JSON.parse(raw);
+      return new Map(Object.entries(obj));
+    }
+  } catch (err) {
+    console.error('Failed to load users.json:', err.message);
+  }
+  return new Map();
+}
+
+// Save users to disk after every change
+function saveUsers() {
+  try {
+    const obj = Object.fromEntries(userStore);
+    writeFileSync(DB_PATH, JSON.stringify(obj, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to save users.json:', err.message);
+  }
+}
+
 // OTP store: kept for compatibility
 const otpStore = new Map();
 // User accounts: email → { email, salt, password, plan, used, ... }
-const userStore = new Map();
+const userStore = loadUsers();
 // Anonymous usage: fingerprint → count
 const anonMap  = new Map();
 // User sessions: token → { email, plan, used, ... }
 const sessions = new Map();
+
+console.log(`   Users loaded: ${userStore.size} accounts`);
 
 const ANON_LIMIT  = 3;
 const FREE_LIMIT  = 10;
@@ -135,6 +166,7 @@ app.post('/api/auth/signup', rateLimit(5, 60000), (req, res) => {
     industry: '', platform: 'instagram', tone: 'bold_educative',
     createdAt: Date.now(),
   });
+  saveUsers(); // persist to disk
 
   const token = makeToken();
   sessions.set(token, { email, plan: 'free', used: 0, industry: '', platform: 'instagram', tone: 'bold_educative', createdAt: Date.now() });
@@ -229,6 +261,15 @@ app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
     if (platform) user.platform = platform;
     if (tone)     user.tone     = tone;
     if (industry) user.industry = industry;
+    // Persist usage + preferences to disk
+    const storedUser = userStore.get(user.email);
+    if (storedUser) {
+      storedUser.used     = user.used;
+      storedUser.platform = user.platform;
+      storedUser.tone     = user.tone;
+      storedUser.industry = user.industry;
+      saveUsers();
+    }
     usage = { plan: isPaid ? 'paid' : 'free', used: user.used, limit: FREE_LIMIT };
   } else {
     const fp   = fingerprint.slice(0, 64);
@@ -348,8 +389,9 @@ app.get('*', (_req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🎬 ReelScript Studio v3.1 → http://localhost:${PORT}`);
+  console.log(`\n🎬 ReelScript Studio v3.2 → http://localhost:${PORT}`);
   console.log(`   Anthropic : ${ANTHROPIC_API_KEY  ? '✓ loaded' : '✗ MISSING'}`);
-  console.log(`   Termii    : ${TERMII_API_KEY     ? '✓ loaded' : '⚠ not set — dev mode (OTP logged to console)'}`);
-  console.log(`   Paystack  : ${PAYSTACK_SECRET    ? '✓ loaded' : '✗ not set'}\n`);
+  console.log(`   Paystack  : ${PAYSTACK_SECRET    ? '✓ loaded' : '✗ not set'}`);
+  console.log(`   Users     : ${userStore.size} accounts loaded from disk`);
+  console.log(`   DB path   : ${DB_PATH}\n`);
 });
