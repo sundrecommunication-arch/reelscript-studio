@@ -29,6 +29,56 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .logo-mark{width:30px;height:30px;background:var(--accent);border-radius:7px;display:grid;place-items:center;font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;}
 .logo em{color:var(--accent);font-style:normal;}
 .nav-right{display:flex;align-items:center;gap:8px;}
+/* User menu dropdown */
+.user-menu-wrap{position:relative;}
+.user-menu-btn{
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.15);
+  color:#fff;border-radius:8px;
+  padding:6px 12px;font-size:0.75rem;font-weight:600;
+  cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;gap:5px;
+}
+.user-menu-btn:hover{background:rgba(255,255,255,0.2);}
+.user-dropdown{
+  position:absolute;top:calc(100% + 8px);right:0;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  box-shadow:0 8px 32px rgba(0,0,0,0.15);
+  z-index:500;min-width:180px;
+  overflow:hidden;display:none;
+}
+.user-menu-wrap.open .user-dropdown{display:block;}
+.user-dropdown-item{
+  padding:12px 16px;
+  font-size:0.84rem;font-weight:500;
+  cursor:pointer;transition:background .1s;
+  display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid var(--border);
+  color:var(--ink);
+}
+.user-dropdown-item:last-child{border-bottom:none;}
+.user-dropdown-item:hover{background:var(--paper);}
+.user-dropdown-item.danger{color:#e53e3e;}
+.user-dropdown-header{
+  padding:12px 16px;
+  background:var(--paper);
+  border-bottom:1px solid var(--border);
+}
+.user-dropdown-email{font-size:0.78rem;color:var(--muted);word-break:break-all;}
+.user-dropdown-plan{
+  font-size:0.7rem;font-weight:700;letter-spacing:0.05em;
+  text-transform:uppercase;margin-top:3px;
+}
+.user-dropdown-plan.pro{color:var(--accent);}
+.user-dropdown-plan.free{color:var(--muted);}
+.pro-badge{
+  background:linear-gradient(135deg,#f5a623,#ff5c00);
+  color:#fff;border-radius:100px;
+  padding:4px 10px;font-size:0.68rem;font-weight:700;
+  letter-spacing:0.04em;
+}
 
 /* Usage pill */
 .usage-pill{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:4px 10px;font-size:0.68rem;font-weight:600;color:rgba(255,255,255,0.7);}
@@ -1230,23 +1280,49 @@ function applyPreferences() {
 }
 
 function updateNavAuth() {
-  const area    = document.getElementById('nav-auth-area');
-  const isPaid  = S.profile?.plan === 'paid';
+  const area   = document.getElementById('nav-auth-area');
+  const isPaid = S.profile?.plan === 'paid';
+
   if (S.user) {
     const display = S.user.email ? S.user.email.split('@')[0] : 'User';
-    if (isPaid) {
-      area.innerHTML = `
-        <span style="background:linear-gradient(135deg,#f5a623,#ff5c00);color:#fff;border-radius:100px;padding:4px 10px;font-size:0.7rem;font-weight:700;margin-right:6px;">⭐ PRO</span>
-        <button class="nav-auth-btn" onclick="signOut()" title="Sign out">👤 ${display}</button>`;
-    } else {
-      area.innerHTML = `
-        <button class="nav-auth-btn accent" onclick="openUpgrade()" style="margin-right:6px;background:var(--accent);border-color:var(--accent);">⬆ Upgrade</button>
-        <button class="nav-auth-btn" onclick="signOut()" title="Sign out">👤 ${display}</button>`;
-    }
+    const email   = S.user.email || '';
+    const planLabel = isPaid ? '⭐ Pro Account' : 'Free Plan';
+    const planClass = isPaid ? 'pro' : 'free';
+
+    area.innerHTML = `
+      <div class="user-menu-wrap" id="user-menu-wrap">
+        ${isPaid ? `<span class="pro-badge" style="margin-right:4px;">⭐ PRO</span>` : `<button class="nav-auth-btn accent" onclick="openUpgrade();event.stopPropagation();" style="margin-right:4px;">⬆ Upgrade</button>`}
+        <button class="user-menu-btn" onclick="toggleUserMenu(event)">
+          👤 ${display} ▾
+        </button>
+        <div class="user-dropdown" id="user-dropdown">
+          <div class="user-dropdown-header">
+            <div class="user-dropdown-email">${email}</div>
+            <div class="user-dropdown-plan ${planClass}">${planLabel}</div>
+          </div>
+          ${!isPaid ? `<div class="user-dropdown-item" onclick="openUpgrade();closeUserMenu();">⭐ Upgrade to Pro</div>` : ''}
+          <div class="user-dropdown-item" onclick="mTab('library');closeUserMenu();">📚 My Scripts</div>
+          <div class="user-dropdown-item danger" onclick="signOut();">🚪 Sign Out</div>
+        </div>
+      </div>`;
   } else {
     area.innerHTML = `<button class="nav-auth-btn" onclick="openAuth('login')" data-t="signin">Sign in</button>`;
   }
 }
+
+function toggleUserMenu(e) {
+  e.stopPropagation();
+  const wrap = document.getElementById('user-menu-wrap');
+  if (wrap) wrap.classList.toggle('open');
+}
+function closeUserMenu() {
+  const wrap = document.getElementById('user-menu-wrap');
+  if (wrap) wrap.classList.remove('open');
+}
+// Close user menu when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('#user-menu-wrap')) closeUserMenu();
+});
 
 function updateUsagePill() {
   const pill   = document.getElementById('usage-pill');
