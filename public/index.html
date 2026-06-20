@@ -1230,48 +1230,55 @@ function applyPreferences() {
 }
 
 function updateNavAuth() {
-  const area = document.getElementById('nav-auth-area');
+  const area    = document.getElementById('nav-auth-area');
+  const isPaid  = S.profile?.plan === 'paid';
   if (S.user) {
     const display = S.user.email ? S.user.email.split('@')[0] : 'User';
-    area.innerHTML = `
-      <button class="nav-auth-btn" onclick="openUpgrade()" style="margin-right:6px;">⭐ Pro</button>
-      <button class="nav-auth-btn" onclick="signOut()" title="Sign out ${S.user.email||''}">👤 ${display}</button>`;
+    if (isPaid) {
+      area.innerHTML = `
+        <span style="background:linear-gradient(135deg,#f5a623,#ff5c00);color:#fff;border-radius:100px;padding:4px 10px;font-size:0.7rem;font-weight:700;margin-right:6px;">⭐ PRO</span>
+        <button class="nav-auth-btn" onclick="signOut()" title="Sign out">👤 ${display}</button>`;
+    } else {
+      area.innerHTML = `
+        <button class="nav-auth-btn accent" onclick="openUpgrade()" style="margin-right:6px;background:var(--accent);border-color:var(--accent);">⬆ Upgrade</button>
+        <button class="nav-auth-btn" onclick="signOut()" title="Sign out">👤 ${display}</button>`;
+    }
   } else {
     area.innerHTML = `<button class="nav-auth-btn" onclick="openAuth('login')" data-t="signin">Sign in</button>`;
   }
 }
 
 function updateUsagePill() {
-  const pill = document.getElementById('usage-pill');
+  const pill   = document.getElementById('usage-pill');
+  const isPaid = S.profile?.plan === 'paid';
   if (!S.profile) { if(pill) pill.style.display='none'; return; }
-  const used  = S.profile.scripts_used_this_month || 0;
-  const limit = S.profile.plan === 'paid' ? '∞' : (S.profile.scripts_limit || 10);
-  const limitNum = S.profile.plan === 'paid' ? 999 : (S.profile.scripts_limit || 10);
 
-  // Desktop pill
-  if (pill) {
-    pill.style.display = 'flex';
-    document.getElementById('usage-used').textContent  = used;
-    document.getElementById('usage-limit').textContent = limit;
-    pill.className = 'usage-pill' + (limit!=='∞' && used >= limitNum ? ' full' : used >= limitNum*0.8 ? ' warning' : '');
-  }
+  const used     = S.profile.scripts_used_this_month || 0;
+  const limit    = isPaid ? '∞' : (S.profile.scripts_limit || 10);
+  const limitNum = isPaid ? 999 : (S.profile.scripts_limit || 10);
+
+  // Desktop pill — hide (nav shows Pro badge instead)
+  if (pill) pill.style.display = 'none';
 
   // Mobile strip
   const strip = document.getElementById('m-usage-strip');
   if (strip) {
     strip.style.display = 'flex';
-    document.getElementById('m-used').textContent  = used;
-    document.getElementById('m-limit').textContent = limit;
-    const pct = limit === '∞' ? 20 : Math.min(100, Math.round((used/limitNum)*100));
-    const bar = document.getElementById('m-usage-bar');
-    if (bar) {
-      bar.style.width = pct + '%';
-      bar.style.background = used >= limitNum ? '#e53e3e' : used >= limitNum*0.8 ? 'var(--accent)' : 'var(--green)';
+    if (isPaid) {
+      // Show Pro badge in strip
+      strip.innerHTML = `
+        <span style="font-size:0.85rem;font-weight:700;color:var(--accent);">⭐ Pro Account</span>
+        <span style="font-size:0.75rem;color:var(--muted);margin-left:auto;">Unlimited scripts</span>`;
+    } else {
+      strip.innerHTML = `
+        <span class="m-usage-count"><span id="m-used">${used}</span>/<span id="m-limit">${limit}</span></span>
+        <div class="m-usage-bar-wrap"><div class="m-usage-bar" id="m-usage-bar" style="width:${Math.min(100,Math.round((used/limitNum)*100))}%;background:${used>=limitNum?'#e53e3e':used>=limitNum*0.8?'var(--accent)':'var(--green)'}"></div></div>
+        <span class="m-usage-label">scripts used</span>`;
     }
   }
 
-  // Upgrade banners
-  const showBanner = S.profile.plan !== 'paid' && used >= limitNum;
+  // Upgrade banners — only show for free users who hit their limit
+  const showBanner = !isPaid && used >= limitNum;
   const db = document.getElementById('d-upgrade-banner');
   const mb = document.getElementById('m-upgrade-banner');
   if(db) db.style.display = showBanner ? 'flex' : 'none';
