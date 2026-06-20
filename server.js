@@ -26,18 +26,54 @@ function loadEnv() {
 loadEnv();
 
 const ANTHROPIC_API_KEY  = process.env.ANTHROPIC_API_KEY;
-const TERMII_API_KEY     = process.env.TERMII_API_KEY;
-const TERMII_SENDER_ID   = process.env.TERMII_SENDER_ID || 'N-Alert';
+const SUPABASE_URL       = process.env.SUPABASE_URL;
+const SUPABASE_KEY       = process.env.SUPABASE_SERVICE_KEY;
 const PAYSTACK_SECRET    = process.env.PAYSTACK_SECRET_KEY;
 const PAYSTACK_PLAN_CODE = process.env.PAYSTACK_PLAN_CODE;
 const APP_URL            = process.env.APP_URL || 'https://reelscript-studio-2.onrender.com';
+const ADMIN_SECRET       = process.env.ADMIN_SECRET || 'reelscript_admin_2026';
+
+/* ════════════════════════════════
+   SUPABASE HELPER
+════════════════════════════════ */
+async function sb(method, table, opts = {}) {
+  const { filter, body, select, order, limit } = opts;
+  let url = `${SUPABASE_URL}/rest/v1/${table}`;
+  const params = [];
+  if (select) params.push(`select=${encodeURIComponent(select)}`);
+  if (filter) params.push(filter);
+  if (order)  params.push(`order=${order}`);
+  if (limit)  params.push(`limit=${limit}`);
+  if (params.length) url += '?' + params.join('&');
+
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': method === 'POST' ? 'return=representation' : 'return=representation',
+  };
+  if (method === 'PATCH' || method === 'DELETE') {
+    headers['Prefer'] = 'return=representation';
+  }
+
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Supabase ${method} ${table} failed (${res.status})`);
+  }
+  return res.json().catch(() => null);
+}
 
 /* ════════════════════════════════
    MIDDLEWARE
 ════════════════════════════════ */
 app.use(express.json({ limit: '20kb' }));
 
-// Security headers
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -48,13 +84,15 @@ app.use((req, res, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://js.paystack.co https://checkout.paystack.com https://paystack.com https://www.gstatic.com",
     "font-src 'self' https://fonts.gstatic.com https://www.gstatic.com",
     "img-src 'self' data: https:",
-    "connect-src 'self' https://api.anthropic.com https://*.supabase.co https://api.paystack.co https://api.ng.termii.com",
+    "connect-src 'self' https://api.anthropic.com https://*.supabase.co https://api.paystack.co https://open.er-api.com",
     "frame-src 'self' https://js.paystack.co https://checkout.paystack.com",
   ].join('; '));
   next();
 });
 
-// Rate limiting
+/* ════════════════════════════════
+   RATE LIMITING
+════════════════════════════════ */
 const ipMap = new Map();
 function rateLimit(max, windowMs) {
   return (req, res, next) => {
@@ -69,68 +107,17 @@ function rateLimit(max, windowMs) {
 }
 
 /* ════════════════════════════════
-   SANITISE
-   — preserves Unicode (Yoruba, Hausa, Igbo, French accents)
-   — only strips actual dangerous HTML/script chars
+   SANITISE (preserves Unicode)
 ════════════════════════════════ */
 function sanitise(str, maxLen = 4000) {
   if (typeof str !== 'string') return '';
-  return str
-    .replace(/</g, '').replace(/>/g, '')   // strip < >
-    .replace(/`/g, '')                      // strip backticks
-    .trim()
-    .slice(0, maxLen);
+  return str.replace(/</g, '').replace(/>/g, '').replace(/`/g, '').trim().slice(0, maxLen);
 }
 function sanitiseShort(str) { return sanitise(str, 200); }
 
 /* ════════════════════════════════
-   PERSISTENT USER STORE (file-backed)
-   Survives server restarts on Render
+   PASSWORD HASHING
 ════════════════════════════════ */
-import { writeFileSync } from 'fs';
-
-const DB_PATH = path.join(__dirname, 'users.json');
-
-// Load existing users from disk on startup
-function loadUsers() {
-  try {
-    if (existsSync(DB_PATH)) {
-      const raw = readFileSync(DB_PATH, 'utf8');
-      const obj = JSON.parse(raw);
-      return new Map(Object.entries(obj));
-    }
-  } catch (err) {
-    console.error('Failed to load users.json:', err.message);
-  }
-  return new Map();
-}
-
-// Save users to disk after every change
-function saveUsers() {
-  try {
-    const obj = Object.fromEntries(userStore);
-    writeFileSync(DB_PATH, JSON.stringify(obj, null, 2), 'utf8');
-  } catch (err) {
-    console.error('Failed to save users.json:', err.message);
-  }
-}
-
-// OTP store: kept for compatibility
-const otpStore = new Map();
-// User accounts: email → { email, salt, password, plan, used, ... }
-const userStore = loadUsers();
-// Anonymous usage: fingerprint → count
-const anonMap  = new Map();
-// User sessions: token → { email, plan, used, ... }
-const sessions = new Map();
-
-console.log(`   Users loaded: ${userStore.size} accounts`);
-
-const ANON_LIMIT  = 3;
-const FREE_LIMIT  = 10;
-const SESSION_TTL = 30 * 60 * 1000; // 30 min auto-logout
-
-// Simple password hash (no bcrypt needed — no extra packages)
 function hashPassword(password, salt) {
   const str = salt + password + 'reelscript_2026';
   let hash = 0;
@@ -141,68 +128,118 @@ function hashPassword(password, salt) {
   }
   return Math.abs(hash).toString(36) + salt.slice(0, 4);
 }
-
 function makeToken() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
 /* ════════════════════════════════
+   IN-MEMORY SESSIONS (30 min TTL)
+════════════════════════════════ */
+const sessions  = new Map();
+const anonMap   = new Map();
+const SESSION_TTL = 30 * 60 * 1000;
+const ANON_LIMIT  = 3;
+const FREE_LIMIT  = 10;
+
+/* ════════════════════════════════
+   SERVE FRONTEND
+════════════════════════════════ */
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', etag: true }));
+
+/* ════════════════════════════════
    EMAIL SIGN UP
 ════════════════════════════════ */
-app.post('/api/auth/signup', rateLimit(5, 60000), (req, res) => {
+app.post('/api/auth/signup', rateLimit(5, 60000), async (req, res) => {
   const email    = sanitiseShort(req.body.email    || '').toLowerCase();
   const password = sanitise(req.body.password || '', 100);
 
   if (!email || !email.includes('@')) return res.status(400).json({ error: 'Please enter a valid email address.' });
   if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
-  if (userStore.has(email)) return res.status(400).json({ error: 'An account with this email already exists. Please sign in.' });
 
-  const salt  = Math.random().toString(36).slice(2);
-  const hashed = hashPassword(password, salt);
+  try {
+    // Check if email already exists
+    const existing = await sb('GET', 'rs_users', {
+      filter: `email=eq.${encodeURIComponent(email)}`,
+      select: 'email',
+    });
+    if (existing && existing.length > 0) {
+      return res.status(400).json({ error: 'An account with this email already exists. Please sign in.' });
+    }
 
-  userStore.set(email, {
-    email, salt, password: hashed,
-    plan: 'free', used: 0,
-    industry: '', platform: 'instagram', tone: 'bold_educative',
-    createdAt: Date.now(),
-  });
-  saveUsers(); // persist to disk
+    const salt   = Math.random().toString(36).slice(2);
+    const hashed = hashPassword(password, salt);
 
-  const token = makeToken();
-  sessions.set(token, { email, plan: 'free', used: 0, industry: '', platform: 'instagram', tone: 'bold_educative', createdAt: Date.now() });
-  setTimeout(() => sessions.delete(token), SESSION_TTL);
+    await sb('POST', 'rs_users', {
+      body: {
+        email,
+        password_hash: hashed,
+        salt,
+        plan: 'free',
+        scripts_used: 0,
+        preferred_platform: 'instagram',
+        preferred_tone: 'bold_educative',
+        preferred_industry: '',
+      }
+    });
 
-  res.json({ success: true, token, email });
+    const token = makeToken();
+    sessions.set(token, { email, plan: 'free', used: 0, platform: 'instagram', tone: 'bold_educative', industry: '', createdAt: Date.now() });
+    setTimeout(() => sessions.delete(token), SESSION_TTL);
+
+    res.json({ success: true, token, email });
+  } catch (err) {
+    console.error('Signup error:', err.message);
+    res.status(500).json({ error: 'Could not create account. Please try again.' });
+  }
 });
 
 /* ════════════════════════════════
    EMAIL SIGN IN
 ════════════════════════════════ */
-app.post('/api/auth/signin', rateLimit(10, 60000), (req, res) => {
+app.post('/api/auth/signin', rateLimit(10, 60000), async (req, res) => {
   const email    = sanitiseShort(req.body.email    || '').toLowerCase();
   const password = sanitise(req.body.password || '', 100);
 
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
 
-  const user = userStore.get(email);
-  if (!user) return res.status(401).json({ error: 'No account found with this email. Please sign up first.' });
+  try {
+    const rows = await sb('GET', 'rs_users', {
+      filter: `email=eq.${encodeURIComponent(email)}`,
+    });
 
-  const hashed = hashPassword(password, user.salt);
-  if (hashed !== user.password) return res.status(401).json({ error: 'Incorrect password. Please try again.' });
+    if (!rows || rows.length === 0) {
+      return res.status(401).json({ error: 'No account found with this email. Please sign up first.' });
+    }
 
-  const token = makeToken();
-  sessions.set(token, {
-    email: user.email,
-    plan: user.plan,
-    used: user.used,
-    industry: user.industry,
-    platform: user.platform,
-    tone: user.tone,
-    createdAt: Date.now(),
-  });
-  setTimeout(() => sessions.delete(token), SESSION_TTL);
+    const user   = rows[0];
+    const hashed = hashPassword(password, user.salt);
 
-  res.json({ success: true, token, email: user.email });
+    if (hashed !== user.password_hash) {
+      return res.status(401).json({ error: 'Incorrect password. Please try again.' });
+    }
+
+    // Check if Pro subscription is still valid
+    const isPaid = user.plan === 'paid' &&
+      user.subscription_expires &&
+      new Date(user.subscription_expires) > new Date();
+
+    const token = makeToken();
+    sessions.set(token, {
+      email:    user.email,
+      plan:     isPaid ? 'paid' : 'free',
+      used:     user.scripts_used || 0,
+      platform: user.preferred_platform || 'instagram',
+      tone:     user.preferred_tone     || 'bold_educative',
+      industry: user.preferred_industry || '',
+      createdAt: Date.now(),
+    });
+    setTimeout(() => sessions.delete(token), SESSION_TTL);
+
+    res.json({ success: true, token, email: user.email });
+  } catch (err) {
+    console.error('Signin error:', err.message);
+    res.status(500).json({ error: 'Sign in failed. Please try again.' });
+  }
 });
 
 /* ════════════════════════════════
@@ -214,88 +251,70 @@ app.get('/api/profile', (req, res) => {
   if (!user) return res.status(401).json({ error: 'Not authenticated.' });
   res.json({
     email: user.email,
-    plan: user.plan,
+    plan:  user.plan,
     scripts_used_this_month: user.used,
     scripts_limit: user.plan === 'paid' ? 999999 : FREE_LIMIT,
     preferred_platform: user.platform,
-    preferred_tone: user.tone,
+    preferred_tone:     user.tone,
     preferred_industry: user.industry,
   });
 });
 
+/* ════════════════════════════════
+   SCRIPTS — GET
+════════════════════════════════ */
+app.get('/api/scripts', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const user  = token ? sessions.get(token) : null;
+  if (!user) return res.status(401).json({ error: 'Not authenticated.' });
+  try {
+    const scripts = await sb('GET', 'rs_scripts', {
+      filter: `user_email=eq.${encodeURIComponent(user.email)}`,
+      order:  'created_at.desc',
+      limit:  50,
+    });
+    res.json({ scripts: scripts || [], total: (scripts || []).length });
+  } catch (err) {
+    res.json({ scripts: [], total: 0 });
+  }
+});
 
 /* ════════════════════════════════
-   SCRIPTS STORAGE
+   SCRIPTS — DELETE
 ════════════════════════════════ */
-const SCRIPTS_PATH = path.join(__dirname, 'scripts.json');
-
-function loadScripts() {
+app.delete('/api/scripts/:id', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const user  = token ? sessions.get(token) : null;
+  if (!user) return res.status(401).json({ error: 'Not authenticated.' });
   try {
-    if (existsSync(SCRIPTS_PATH)) {
-      const raw = readFileSync(SCRIPTS_PATH, 'utf8');
-      return JSON.parse(raw); // { email: [scripts...] }
-    }
-  } catch (err) { console.error('Failed to load scripts.json:', err.message); }
-  return {};
-}
-function saveScripts(scriptsDb) {
-  try { writeFileSync(SCRIPTS_PATH, JSON.stringify(scriptsDb, null, 2), 'utf8'); }
-  catch (err) { console.error('Failed to save scripts.json:', err.message); }
-}
-
-const scriptsDb = loadScripts();
-
-function getUserScripts(email) {
-  return scriptsDb[email] || [];
-}
-function addUserScript(email, script) {
-  if (!scriptsDb[email]) scriptsDb[email] = [];
-  scriptsDb[email].unshift(script); // newest first
-  if (scriptsDb[email].length > 50) scriptsDb[email].pop(); // max 50 per user
-  saveScripts(scriptsDb);
-}
-function deleteUserScript(email, id) {
-  if (!scriptsDb[email]) return false;
-  const before = scriptsDb[email].length;
-  scriptsDb[email] = scriptsDb[email].filter(s => s.id !== id);
-  if (scriptsDb[email].length !== before) { saveScripts(scriptsDb); return true; }
-  return false;
-}
-
-/* ── GET scripts ── */
-app.get('/api/scripts', (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  const user  = token ? sessions.get(token) : null;
-  if (!user) return res.status(401).json({ error: 'Not authenticated.' });
-  const scripts = getUserScripts(user.email);
-  res.json({ scripts, total: scripts.length });
+    await sb('DELETE', 'rs_scripts', {
+      filter: `id=eq.${req.params.id}&user_email=eq.${encodeURIComponent(user.email)}`,
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Delete failed.' });
+  }
 });
 
-/* ── DELETE script ── */
-app.delete('/api/scripts/:id', (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  const user  = token ? sessions.get(token) : null;
-  if (!user) return res.status(401).json({ error: 'Not authenticated.' });
-  deleteUserScript(user.email, req.params.id);
-  res.json({ success: true });
-});
-
-
+/* ════════════════════════════════
+   GENERATE SCRIPT
+════════════════════════════════ */
 app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
   if (!ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'API key not configured. Add ANTHROPIC_API_KEY to Render environment variables.' });
+    return res.status(500).json({ error: 'API key not configured.' });
   }
 
   const token = req.headers.authorization?.replace('Bearer ', '');
   const user  = token ? sessions.get(token) : null;
 
-  // Sanitise prompts — preserve Unicode for language support
   const systemPrompt = sanitise(req.body.systemPrompt, 6000);
   const userPrompt   = sanitise(req.body.userPrompt,   2000);
   const fingerprint  = sanitiseShort(req.body.fingerprint || 'anon');
   const platform     = sanitiseShort(req.body.platform  || '');
   const industry     = sanitiseShort(req.body.industry  || '');
   const tone         = sanitiseShort(req.body.tone      || '');
+  const topic        = sanitiseShort(req.body.topic     || '');
+  const duration     = sanitiseShort(req.body.duration  || '');
 
   if (!systemPrompt || !userPrompt) {
     return res.status(400).json({ error: 'Missing required fields.' });
@@ -312,19 +331,19 @@ app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
       });
     }
     user.used++;
-    // Save preferences
     if (platform) user.platform = platform;
     if (tone)     user.tone     = tone;
     if (industry) user.industry = industry;
-    // Persist usage + preferences to disk
-    const storedUser = userStore.get(user.email);
-    if (storedUser) {
-      storedUser.used     = user.used;
-      storedUser.platform = user.platform;
-      storedUser.tone     = user.tone;
-      storedUser.industry = user.industry;
-      saveUsers();
-    }
+    // Update usage in Supabase
+    sb('PATCH', 'rs_users', {
+      filter: `email=eq.${encodeURIComponent(user.email)}`,
+      body: {
+        scripts_used: user.used,
+        preferred_platform: user.platform,
+        preferred_tone:     user.tone,
+        preferred_industry: user.industry,
+      }
+    }).catch(e => console.error('Usage update failed:', e.message));
     usage = { plan: isPaid ? 'paid' : 'free', used: user.used, limit: FREE_LIMIT };
   } else {
     const fp   = fingerprint.slice(0, 64);
@@ -339,7 +358,7 @@ app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
     usage = { plan: 'anonymous', used, limit: ANON_LIMIT };
   }
 
-  // ── Call Anthropic ──
+  // ── Call Claude ──
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -363,22 +382,19 @@ app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
 
     const text = data.content?.map(b => b.text || '').join('') || '';
 
-    // Save script to user's library
+    // Save script to Supabase
     if (user && text) {
-      addUserScript(user.email, {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-        platform:    sanitiseShort(req.body.platform  || ''),
-        industry:    sanitiseShort(req.body.industry  || ''),
-        topic:       sanitiseShort(req.body.topic     || ''),
-        tone:        sanitiseShort(req.body.tone      || ''),
-        duration:    sanitiseShort(req.body.duration  || ''),
-        script_text: text,
-        created_at:  new Date().toISOString(),
-      });
+      sb('POST', 'rs_scripts', {
+        body: {
+          id:          Date.now().toString(36) + Math.random().toString(36).slice(2),
+          user_email:  user.email,
+          platform, industry, topic, tone, duration,
+          script_text: text,
+        }
+      }).catch(e => console.error('Script save failed:', e.message));
     }
 
     res.json({ text, usage });
-
   } catch (err) {
     console.error('Generate error:', err.message);
     res.status(500).json({ error: 'Server error. Please try again.' });
@@ -386,9 +402,8 @@ app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
 });
 
 /* ════════════════════════════════
-   EXCHANGE RATES (live from open API)
+   EXCHANGE RATES
 ════════════════════════════════ */
-// Cache rates for 1 hour
 let ratesCache = null;
 let ratesCacheTime = 0;
 
@@ -398,42 +413,23 @@ app.get('/api/rates', async (_req, res) => {
     if (ratesCache && now - ratesCacheTime < 3600000) {
       return res.json({ rates: ratesCache });
     }
-    // Fetch live rates from open exchange rates (free, no key needed for NGN base)
     const resp = await fetch('https://open.er-api.com/v6/latest/NGN');
     const data = await resp.json();
     if (data.rates) {
-      ratesCache = {
-        NGN: 1,
-        GHS: data.rates.GHS || 0.0086,
-        KES: data.rates.KES || 0.13,
-        EGP: data.rates.EGP || 0.048,
-        XOF: data.rates.XOF || 0.6,
-        ZAR: data.rates.ZAR || 0.019,
-        USD: data.rates.USD || 0.00065,
-      };
+      ratesCache = { NGN:1, GHS:data.rates.GHS||0.0086, KES:data.rates.KES||0.13, EGP:data.rates.EGP||0.048, XOF:data.rates.XOF||0.6, ZAR:data.rates.ZAR||0.019, USD:data.rates.USD||0.00065 };
       ratesCacheTime = now;
       return res.json({ rates: ratesCache });
     }
-    throw new Error('No rates returned');
+    throw new Error('No rates');
   } catch {
-    // Return fallback rates
     res.json({ rates: { NGN:1, GHS:0.0086, KES:0.13, EGP:0.048, XOF:0.6, ZAR:0.019, USD:0.00065 } });
   }
 });
 
 /* ════════════════════════════════
-   PAYSTACK — SUBSCRIBE (multi-currency)
+   PAYSTACK — SUBSCRIBE
 ════════════════════════════════ */
-// Price in each currency (kobo/cents/minor units × 100)
-const PRICES = {
-  NGN: 1500000,  // ₦15,000 in kobo
-  GHS: 13000,    // GHS 130 in pesewas
-  KES: 195000,   // KSh 1,950 in cents
-  EGP: 72500,    // E£725 in piastres
-  XOF: 1500000,  // CFA 9,000 — charged in NGN equivalent
-  ZAR: 28000,    // R280 in cents
-  USD: 1000,     // $10 in cents
-};
+const PRICES = { NGN:1500000, GHS:13000, KES:195000, EGP:72500, XOF:1500000, ZAR:28000, USD:1000 };
 
 app.post('/api/subscribe', rateLimit(5, 60000), async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
@@ -444,26 +440,17 @@ app.post('/api/subscribe', rateLimit(5, 60000), async (req, res) => {
   const currency         = sanitiseShort(req.body.currency         || 'NGN').toUpperCase();
   const paystackCurrency = sanitiseShort(req.body.paystackCurrency || 'NGN').toUpperCase();
   const amount           = PRICES[currency] || PRICES.NGN;
-  const email            = user.email || (user.phone?.replace('+','') + '@reelscript.app');
 
   try {
     const resp = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email,
+        email: user.email,
         amount,
         currency: paystackCurrency,
         plan: paystackCurrency === 'NGN' ? PAYSTACK_PLAN_CODE : undefined,
-        metadata: {
-          token,
-          email:    user.email,
-          currency,
-          custom_fields: [
-            { display_name: 'Plan', variable_name: 'plan', value: 'ReelScript Pro' },
-            { display_name: 'Currency', variable_name: 'currency', value: currency },
-          ]
-        },
+        metadata: { token, email: user.email, currency },
         callback_url: `${APP_URL}/api/paystack/callback`,
       }),
     });
@@ -488,120 +475,91 @@ app.get('/api/paystack/callback', async (req, res) => {
     });
     const data = await resp.json();
     if (data.data?.status === 'success') {
+      const email = data.data.metadata?.email;
       const sessionToken = data.data.metadata?.token;
-      const email        = data.data.metadata?.email;
-      const sessionUser  = sessionToken ? sessions.get(sessionToken) : null;
 
-      // Update session if still active
-      if (sessionUser) {
-        sessionUser.plan = 'paid';
-        sessionUser.used = 0;
-      }
+      // Update session
+      const sessionUser = sessionToken ? sessions.get(sessionToken) : null;
+      if (sessionUser) { sessionUser.plan = 'paid'; sessionUser.used = 0; }
 
-      // Persist Pro status to disk so it survives restarts
-      const targetEmail = email || sessionUser?.email;
-      if (targetEmail) {
-        const storedUser = userStore.get(targetEmail.toLowerCase());
-        if (storedUser) {
-          storedUser.plan = 'paid';
-          storedUser.used = 0;
-          const expires = new Date();
-          expires.setMonth(expires.getMonth() + 1);
-          storedUser.subscriptionExpires = expires.toISOString();
-          userStore.set(targetEmail.toLowerCase(), storedUser);
-          saveUsers();
-          console.log(`✅ Paystack: upgraded ${targetEmail} to Pro`);
-        }
+      // Persist to Supabase
+      if (email) {
+        const expires = new Date();
+        expires.setMonth(expires.getMonth() + 1);
+        await sb('PATCH', 'rs_users', {
+          filter: `email=eq.${encodeURIComponent(email.toLowerCase())}`,
+          body: { plan: 'paid', scripts_used: 0, subscription_expires: expires.toISOString() }
+        }).catch(e => console.error('Pro upgrade failed:', e.message));
+        console.log(`✅ Upgraded ${email} to Pro via Paystack`);
       }
       return res.redirect('/?payment=success');
     }
     res.redirect('/?payment=failed');
-  } catch { res.redirect('/?payment=failed'); }
+  } catch (err) {
+    console.error('Callback error:', err.message);
+    res.redirect('/?payment=failed');
+  }
 });
 
 /* ════════════════════════════════
-   ADMIN — UPGRADE USER MANUALLY
-   POST /api/admin/upgrade?secret=XXX&email=YYY
+   ADMIN — UPGRADE USER
 ════════════════════════════════ */
-app.post('/api/admin/upgrade', (req, res) => {
+app.post('/api/admin/upgrade', async (req, res) => {
   const secret = req.query.secret || req.body.secret;
-  const email  = (req.query.email  || req.body.email  || '').toLowerCase().trim();
-  const ADMIN_SECRET = process.env.ADMIN_SECRET || 'reelscript_admin_2026';
-
+  const email  = (req.query.email || req.body.email || '').toLowerCase().trim();
   if (secret !== ADMIN_SECRET) return res.status(401).json({ error: 'Unauthorized' });
   if (!email) return res.status(400).json({ error: 'Email required' });
-
-  const user = userStore.get(email);
-  if (!user) return res.status(404).json({ error: `No account found for ${email}` });
-
-  // Upgrade in userStore
-  user.plan = 'paid';
-  user.used = 0;
-  const expires = new Date();
-  expires.setMonth(expires.getMonth() + 1);
-  user.subscriptionExpires = expires.toISOString();
-  userStore.set(email, user);
-  saveUsers();
-
-  // Also upgrade any active sessions for this user
-  let sessionsUpdated = 0;
-  sessions.forEach((s, token) => {
-    if (s.email === email) {
-      s.plan = 'paid';
-      s.used = 0;
-      sessionsUpdated++;
-    }
-  });
-
-  console.log(`✅ Admin upgraded ${email} to Pro (${sessionsUpdated} active sessions updated)`);
-  res.json({ success: true, email, plan: 'paid', expires: expires.toISOString(), sessionsUpdated });
+  try {
+    const expires = new Date();
+    expires.setMonth(expires.getMonth() + 1);
+    await sb('PATCH', 'rs_users', {
+      filter: `email=eq.${encodeURIComponent(email)}`,
+      body: { plan: 'paid', scripts_used: 0, subscription_expires: expires.toISOString() }
+    });
+    // Update active sessions
+    sessions.forEach(s => { if (s.email === email) { s.plan = 'paid'; s.used = 0; } });
+    console.log(`✅ Admin upgraded ${email} to Pro`);
+    res.json({ success: true, email, plan: 'paid', expires: expires.toISOString() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /* ════════════════════════════════
    ADMIN — LIST USERS
-   GET /api/admin/users?secret=XXX
 ════════════════════════════════ */
-app.get('/api/admin/users', (req, res) => {
-  const secret = req.query.secret;
-  const ADMIN_SECRET = process.env.ADMIN_SECRET || 'reelscript_admin_2026';
-  if (secret !== ADMIN_SECRET) return res.status(401).json({ error: 'Unauthorized' });
-
-  const users = [];
-  userStore.forEach((u, email) => {
-    users.push({
-      email,
-      plan: u.plan || 'free',
-      used: u.used || 0,
-      createdAt: u.createdAt,
-      subscriptionExpires: u.subscriptionExpires || null,
-    });
-  });
-  res.json({ total: users.length, users });
+app.get('/api/admin/users', async (req, res) => {
+  if (req.query.secret !== ADMIN_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const users = await sb('GET', 'rs_users', { select: 'email,plan,scripts_used,created_at,subscription_expires', order: 'created_at.desc' });
+    res.json({ total: (users||[]).length, users: users||[] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-
+/* ════════════════════════════════
+   HEALTH CHECK
+════════════════════════════════ */
 app.get('/api/health', (_req, res) => {
   res.json({
-    status: 'ok',
-    version: '3.1.0',
-    anthropic: ANTHROPIC_API_KEY  ? '✓' : '✗ missing',
-    termii:    TERMII_API_KEY     ? '✓' : '✗ not set (dev mode)',
-    paystack:  PAYSTACK_SECRET    ? '✓' : '✗ not set',
+    status: 'ok', version: '4.0.0',
+    anthropic: ANTHROPIC_API_KEY ? '✓' : '✗',
+    supabase:  SUPABASE_URL      ? '✓' : '✗',
+    paystack:  PAYSTACK_SECRET   ? '✓' : '✗',
   });
 });
 
 /* ════════════════════════════════
-   SERVE FRONTEND
+   SPA FALLBACK
 ════════════════════════════════ */
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', etag: true }));
 app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🎬 ReelScript Studio v3.2 → http://localhost:${PORT}`);
-  console.log(`   Anthropic : ${ANTHROPIC_API_KEY  ? '✓ loaded' : '✗ MISSING'}`);
-  console.log(`   Paystack  : ${PAYSTACK_SECRET    ? '✓ loaded' : '✗ not set'}`);
-  console.log(`   Users     : ${userStore.size} accounts loaded from disk`);
-  console.log(`   DB path   : ${DB_PATH}\n`);
+  console.log(`\n🎬 ReelScript Studio v4.0 → http://localhost:${PORT}`);
+  console.log(`   Anthropic : ${ANTHROPIC_API_KEY ? '✓ loaded' : '✗ MISSING'}`);
+  console.log(`   Supabase  : ${SUPABASE_URL      ? '✓ loaded' : '✗ MISSING'}`);
+  console.log(`   Paystack  : ${PAYSTACK_SECRET   ? '✓ loaded' : '✗ not set'}\n`);
 });
