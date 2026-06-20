@@ -489,8 +489,30 @@ app.get('/api/paystack/callback', async (req, res) => {
     const data = await resp.json();
     if (data.data?.status === 'success') {
       const sessionToken = data.data.metadata?.token;
-      const user = sessionToken ? sessions.get(sessionToken) : null;
-      if (user) { user.plan = 'paid'; user.used = 0; }
+      const email        = data.data.metadata?.email;
+      const sessionUser  = sessionToken ? sessions.get(sessionToken) : null;
+
+      // Update session if still active
+      if (sessionUser) {
+        sessionUser.plan = 'paid';
+        sessionUser.used = 0;
+      }
+
+      // Persist Pro status to disk so it survives restarts
+      const targetEmail = email || sessionUser?.email;
+      if (targetEmail) {
+        const storedUser = userStore.get(targetEmail.toLowerCase());
+        if (storedUser) {
+          storedUser.plan = 'paid';
+          storedUser.used = 0;
+          const expires = new Date();
+          expires.setMonth(expires.getMonth() + 1);
+          storedUser.subscriptionExpires = expires.toISOString();
+          userStore.set(targetEmail.toLowerCase(), storedUser);
+          saveUsers();
+          console.log(`✅ Paystack: upgraded ${targetEmail} to Pro`);
+        }
+      }
       return res.redirect('/?payment=success');
     }
     res.redirect('/?payment=failed');
@@ -498,8 +520,66 @@ app.get('/api/paystack/callback', async (req, res) => {
 });
 
 /* ════════════════════════════════
-   HEALTH CHECK
+   ADMIN — UPGRADE USER MANUALLY
+   POST /api/admin/upgrade?secret=XXX&email=YYY
 ════════════════════════════════ */
+app.post('/api/admin/upgrade', (req, res) => {
+  const secret = req.query.secret || req.body.secret;
+  const email  = (req.query.email  || req.body.email  || '').toLowerCase().trim();
+  const ADMIN_SECRET = process.env.ADMIN_SECRET || 'reelscript_admin_2026';
+
+  if (secret !== ADMIN_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  if (!email) return res.status(400).json({ error: 'Email required' });
+
+  const user = userStore.get(email);
+  if (!user) return res.status(404).json({ error: `No account found for ${email}` });
+
+  // Upgrade in userStore
+  user.plan = 'paid';
+  user.used = 0;
+  const expires = new Date();
+  expires.setMonth(expires.getMonth() + 1);
+  user.subscriptionExpires = expires.toISOString();
+  userStore.set(email, user);
+  saveUsers();
+
+  // Also upgrade any active sessions for this user
+  let sessionsUpdated = 0;
+  sessions.forEach((s, token) => {
+    if (s.email === email) {
+      s.plan = 'paid';
+      s.used = 0;
+      sessionsUpdated++;
+    }
+  });
+
+  console.log(`✅ Admin upgraded ${email} to Pro (${sessionsUpdated} active sessions updated)`);
+  res.json({ success: true, email, plan: 'paid', expires: expires.toISOString(), sessionsUpdated });
+});
+
+/* ════════════════════════════════
+   ADMIN — LIST USERS
+   GET /api/admin/users?secret=XXX
+════════════════════════════════ */
+app.get('/api/admin/users', (req, res) => {
+  const secret = req.query.secret;
+  const ADMIN_SECRET = process.env.ADMIN_SECRET || 'reelscript_admin_2026';
+  if (secret !== ADMIN_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+
+  const users = [];
+  userStore.forEach((u, email) => {
+    users.push({
+      email,
+      plan: u.plan || 'free',
+      used: u.used || 0,
+      createdAt: u.createdAt,
+      subscriptionExpires: u.subscriptionExpires || null,
+    });
+  });
+  res.json({ total: users.length, users });
+});
+
+
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
