@@ -386,15 +386,65 @@ app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
 });
 
 /* ════════════════════════════════
-   PAYSTACK — SUBSCRIBE
+   EXCHANGE RATES (live from open API)
 ════════════════════════════════ */
+// Cache rates for 1 hour
+let ratesCache = null;
+let ratesCacheTime = 0;
+
+app.get('/api/rates', async (_req, res) => {
+  try {
+    const now = Date.now();
+    if (ratesCache && now - ratesCacheTime < 3600000) {
+      return res.json({ rates: ratesCache });
+    }
+    // Fetch live rates from open exchange rates (free, no key needed for NGN base)
+    const resp = await fetch('https://open.er-api.com/v6/latest/NGN');
+    const data = await resp.json();
+    if (data.rates) {
+      ratesCache = {
+        NGN: 1,
+        GHS: data.rates.GHS || 0.0086,
+        KES: data.rates.KES || 0.13,
+        EGP: data.rates.EGP || 0.048,
+        XOF: data.rates.XOF || 0.6,
+        ZAR: data.rates.ZAR || 0.019,
+        USD: data.rates.USD || 0.00065,
+      };
+      ratesCacheTime = now;
+      return res.json({ rates: ratesCache });
+    }
+    throw new Error('No rates returned');
+  } catch {
+    // Return fallback rates
+    res.json({ rates: { NGN:1, GHS:0.0086, KES:0.13, EGP:0.048, XOF:0.6, ZAR:0.019, USD:0.00065 } });
+  }
+});
+
+/* ════════════════════════════════
+   PAYSTACK — SUBSCRIBE (multi-currency)
+════════════════════════════════ */
+// Price in each currency (kobo/cents/minor units × 100)
+const PRICES = {
+  NGN: 1500000,  // ₦15,000 in kobo
+  GHS: 13000,    // GHS 130 in pesewas
+  KES: 195000,   // KSh 1,950 in cents
+  EGP: 72500,    // E£725 in piastres
+  XOF: 1500000,  // CFA 9,000 — charged in NGN equivalent
+  ZAR: 28000,    // R280 in cents
+  USD: 1000,     // $10 in cents
+};
+
 app.post('/api/subscribe', rateLimit(5, 60000), async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   const user  = token ? sessions.get(token) : null;
   if (!user) return res.status(401).json({ error: 'Please sign in to subscribe.' });
-  if (!PAYSTACK_SECRET) return res.status(500).json({ error: 'Payment not configured.' });
+  if (!PAYSTACK_SECRET) return res.status(500).json({ error: 'Payment not configured on server.' });
 
-  const email = user.phone.replace('+', '') + '@reelscript.app';
+  const currency         = sanitiseShort(req.body.currency         || 'NGN').toUpperCase();
+  const paystackCurrency = sanitiseShort(req.body.paystackCurrency || 'NGN').toUpperCase();
+  const amount           = PRICES[currency] || PRICES.NGN;
+  const email            = user.email || (user.phone?.replace('+','') + '@reelscript.app');
 
   try {
     const resp = await fetch('https://api.paystack.co/transaction/initialize', {
@@ -402,17 +452,27 @@ app.post('/api/subscribe', rateLimit(5, 60000), async (req, res) => {
       headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email,
-        amount: 1500000,
-        plan: PAYSTACK_PLAN_CODE,
-        metadata: { token, phone: user.phone },
+        amount,
+        currency: paystackCurrency,
+        plan: paystackCurrency === 'NGN' ? PAYSTACK_PLAN_CODE : undefined,
+        metadata: {
+          token,
+          email:    user.email,
+          currency,
+          custom_fields: [
+            { display_name: 'Plan', variable_name: 'plan', value: 'ReelScript Pro' },
+            { display_name: 'Currency', variable_name: 'currency', value: currency },
+          ]
+        },
         callback_url: `${APP_URL}/api/paystack/callback`,
       }),
     });
     const data = await resp.json();
-    if (!data.status) return res.status(400).json({ error: data.message });
+    if (!data.status) return res.status(400).json({ error: data.message || 'Paystack error' });
     res.json({ authorization_url: data.data.authorization_url });
   } catch (err) {
-    res.status(500).json({ error: 'Payment initiation failed.' });
+    console.error('Subscribe error:', err.message);
+    res.status(500).json({ error: 'Payment initiation failed. Try again.' });
   }
 });
 
