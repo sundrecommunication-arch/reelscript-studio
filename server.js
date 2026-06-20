@@ -301,7 +301,7 @@ app.post('/api/subscribe', rateLimit(5, 60000), async (req, res) => {
       headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email,
-        amount: 500000,
+        amount: 1500000,
         plan: PAYSTACK_PLAN_CODE,
         metadata: { token, phone: user.phone },
         callback_url: `${APP_URL}/api/paystack/callback`,

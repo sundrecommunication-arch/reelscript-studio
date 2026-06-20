@@ -260,7 +260,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .m-panel-title em{color:var(--accent);font-style:normal;}
 .m-panel-sub{font-size:0.8rem;color:var(--muted);margin-bottom:18px;line-height:1.5;}
 
-.step-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);margin-bottom:10px;overflow:hidden;transition:border-color .2s;}
+.step-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);margin-bottom:10px;overflow:visible;transition:border-color .2s;}
 .step-card.open{border-color:var(--accent);}
 .step-hdr{display:flex;align-items:center;gap:11px;padding:14px;cursor:pointer;user-select:none;-webkit-user-select:none;}
 .step-num{width:24px;height:24px;background:var(--ink);color:#fff;border-radius:50%;display:grid;place-items:center;font-size:0.68rem;font-weight:700;flex-shrink:0;transition:background .2s;}
@@ -392,7 +392,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 
     <!-- Upgrade banner (hidden by default) -->
     <div class="upgrade-banner" id="d-upgrade-banner" style="display:none;">
-      <div><h3>🚀 Upgrade to Pro</h3><p>You've used your free scripts. Get unlimited scripts for ₦5,000/month.</p></div>
+      <div><h3>🚀 Upgrade to Pro</h3><p>You've used your free scripts. Get unlimited scripts for ₦15,000/month.</p></div>
       <button class="upgrade-cta-btn" onclick="startUpgrade()">Upgrade Now</button>
     </div>
 
@@ -425,7 +425,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
       <p class="m-panel-sub" id="m-build-sub">Fill the steps, then Generate.</p>
 
       <div class="upgrade-banner" id="m-upgrade-banner" style="display:none;margin-bottom:14px;">
-        <div><h3>🚀 Upgrade to Pro</h3><p>Get unlimited scripts for ₦5,000/month.</p></div>
+        <div><h3>🚀 Upgrade to Pro</h3><p>Get unlimited scripts for ₦15,000/month.</p></div>
         <button class="upgrade-cta-btn" onclick="startUpgrade()">Upgrade</button>
       </div>
 
@@ -542,8 +542,8 @@ textarea,input{font-family:'DM Sans',sans-serif;}
     <div class="modal-head" style="background:var(--accent);"><h3>🚀 Upgrade to Pro</h3><span class="modal-close" onclick="closeModal('upgrade-modal')">✕</span></div>
     <div class="modal-body">
       <div style="background:#fff4f0;border-radius:var(--r);padding:16px;text-align:center;">
-        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;color:var(--accent);">₦5,000</div>
-        <div style="font-size:0.8rem;color:var(--muted);margin-top:2px;">per month · Cancel anytime</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;color:var(--accent);">₦15,000</div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:2px;">per month · Cancel anytime · All 6 platforms</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <div style="font-size:0.83rem;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);font-size:1rem;">✓</span> Unlimited script generations</div>
@@ -552,7 +552,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
         <div style="font-size:0.83rem;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);font-size:1rem;">✓</span> Personalised preferences saved</div>
         <div style="font-size:0.83rem;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);font-size:1rem;">✓</span> Pay with Nigerian card, bank transfer, or USSD</div>
       </div>
-      <button class="modal-btn" onclick="payWithPaystack()">Pay ₦5,000/month with Paystack</button>
+      <button class="modal-btn" onclick="payWithPaystack()">Pay ₦15,000/month with Paystack</button>
       <div class="modal-note">Secured by Paystack. Your card details are never stored on our servers.</div>
     </div>
   </div>
@@ -603,7 +603,7 @@ const LANGS = {
       tip2title:'Educate, don\'t sell', tip2body:'Scripts that teach outperform scripts that pitch. Give value first.',
       tip3title:'One CTA only', tip3body:'Save · Share · Follow · DM. Pick one. Asking for three gets you zero.',
       signin:'Sign in', upgrade:'⭐ Upgrade', signout:'Sign out',
-      upgradeTitle:'🚀 Upgrade to Pro', upgradeBody:'You\'ve used your free scripts. Get unlimited scripts for ₦5,000/month.', upgradeNow:'Upgrade Now',
+      upgradeTitle:'🚀 Upgrade to Pro', upgradeBody:'You\'ve used your free scripts. Get unlimited scripts for ₦15,000/month.', upgradeNow:'Upgrade Now',
       scripts:'scripts', outputTab:'Script', libraryTab:'Library', buildTab:'Build',
       phoneLabel:'Phone Number', sendCode:'Send Verification Code', sending:'Sending…',
       otpLabel:'Verification Code', verify:'Verify & Sign In', verifying:'Verifying…', changeNum:'← Change number',
@@ -631,7 +631,7 @@ const LANGS = {
       tip2title:'Kọni, maṣe ta', tip2body:'Awọn iwe-afọwọkọ ti o kọni dara julọ. Fun iye akọkọ.',
       tip3title:'CTA kan nikan', tip3body:'Fi pamọ · Pin · Tẹle · DM. Yan ọkan. Beere mẹta gba ọfẹ.',
       signin:'Wọle', upgrade:'⭐ Ìgbésókè', signout:'Jade',
-      upgradeTitle:'🚀 Wọle si Pro', upgradeBody:'O ti lo awọn iwe-afọwọkọ ọfẹ rẹ. Gba ailopin fun ₦5,000/osù.', upgradeNow:'Gbe Dide Bayi',
+      upgradeTitle:'🚀 Wọle si Pro', upgradeBody:'O ti lo awọn iwe-afọwọkọ ọfẹ rẹ. Gba ailopin fun ₦15,000/osù.', upgradeNow:'Gbe Dide Bayi',
       scripts:'awọn iwe', outputTab:'Iwe-afọwọkọ', libraryTab:'Ile-ikawe', buildTab:'Kọ',
       phoneLabel:'Nọmba Foonu', sendCode:'Fi Koodu Ìmójútó Ranṣẹ', sending:'Firanṣẹ…',
       otpLabel:'Koodu Ìmójútó', verify:'Ṣayẹwo & Wọle', verifying:'Ṣayẹwo…', changeNum:'← Yi nọmba pada',
@@ -659,7 +659,7 @@ const LANGS = {
       tip2title:'Koyarwa, kada ka sayarwa', tip2body:'Rubuce-rubucen da ke koyarwa sun fi na siyarwa. Ka ba da ƙima da farko.',
       tip3title:'CTA ɗaya kawai', tip3body:'Ajiye · Raba · Bi · DM. Zaɓi ɗaya. Neman uku yana ba ka sifiri.',
       signin:'Shiga', upgrade:'⭐ Haɓaka', signout:'Fita',
-      upgradeTitle:'🚀 Haɓaka zuwa Pro', upgradeBody:'Ka yi amfani da rubuce-rubucenka na kyauta. Sami marasa iyaka don ₦5,000/wata.', upgradeNow:'Haɓaka Yanzu',
+      upgradeTitle:'🚀 Haɓaka zuwa Pro', upgradeBody:'Ka yi amfani da rubuce-rubucenka na kyauta. Sami marasa iyaka don ₦15,000/wata.', upgradeNow:'Haɓaka Yanzu',
       scripts:'rubuce-rubuce', outputTab:'Rubutu', libraryTab:'Laburare', buildTab:'Gina',
       phoneLabel:'Lambar Wayar', sendCode:'Aika Lambar Tabbatarwa', sending:'Ana aika…',
       otpLabel:'Lambar Tabbatarwa', verify:'Tabbatar & Shiga', verifying:'Ana tabbatarwa…', changeNum:'← Canza lamba',
@@ -687,7 +687,7 @@ const LANGS = {
       tip2title:'Kụziere, emere ire ahịa', tip2body:'Edemede ndị na-akụziere ka mma. Nye uru na mbụ.',
       tip3title:'CTA otu nkaa', tip3body:'Chekwaa · Kekọrịta · Soro · DM. Họrọ otu. Arịọ atọ na-enye gị efu.',
       signin:'Bata', upgrade:'⭐ Kwalite', signout:'Pụọ',
-      upgradeTitle:'🚀 Kwalite gaa Pro', upgradeBody:'Ị ahụola edemede gị efu. Nweta ndọtị enweghị oke maka ₦5,000/ọnwa.', upgradeNow:'Kwalite Ugbu a',
+      upgradeTitle:'🚀 Kwalite gaa Pro', upgradeBody:'Ị ahụola edemede gị efu. Nweta ndọtị enweghị oke maka ₦15,000/ọnwa.', upgradeNow:'Kwalite Ugbu a',
       scripts:'edemede', outputTab:'Edemede', libraryTab:'Ụlọ akwụkwọ', buildTab:'Wuo',
       phoneLabel:'Nọmba ekwentị', sendCode:'Zipu koodu nkwenye', sending:'Na-eziga…',
       otpLabel:'Koodu Nkwenye', verify:'Kwenye & Bata', verifying:'Na-akwenye…', changeNum:'← Gbanwee nọmba',
@@ -715,7 +715,7 @@ const LANGS = {
       tip2title:'Éduquez, ne vendez pas', tip2body:'Les scripts qui enseignent surpassent ceux qui vendent. Donnez de la valeur d\'abord.',
       tip3title:'Un seul CTA', tip3body:'Enregistrer · Partager · Suivre · DM. Choisissez-en un. En demander trois donne zéro.',
       signin:'Connexion', upgrade:'⭐ Améliorer', signout:'Déconnexion',
-      upgradeTitle:'🚀 Passer à Pro', upgradeBody:'Vous avez utilisé vos scripts gratuits. Obtenez des scripts illimités pour ₦5,000/mois.', upgradeNow:'Améliorer Maintenant',
+      upgradeTitle:'🚀 Passer à Pro', upgradeBody:'Vous avez utilisé vos scripts gratuits. Obtenez des scripts illimités pour ₦15,000/mois.', upgradeNow:'Améliorer Maintenant',
       scripts:'scripts', outputTab:'Script', libraryTab:'Bibliothèque', buildTab:'Créer',
       phoneLabel:'Numéro de Téléphone', sendCode:'Envoyer le Code de Vérification', sending:'Envoi…',
       otpLabel:'Code de Vérification', verify:'Vérifier & Se Connecter', verifying:'Vérification…', changeNum:'← Changer le numéro',
@@ -743,7 +743,7 @@ const LANGS = {
       tip2title:'Teach, no dey sell', tip2body:'Script wey teach people beta pass script wey dey sell. Give value first.',
       tip3title:'One CTA only', tip3body:'Save · Share · Follow · DM. Pick one. If you ask for three, you go get zero.',
       signin:'Sign In', upgrade:'⭐ Upgrade', signout:'Sign Out',
-      upgradeTitle:'🚀 Upgrade to Pro', upgradeBody:'You don use your free scripts finish. Get unlimited scripts for ₦5,000 per month.', upgradeNow:'Upgrade Now',
+      upgradeTitle:'🚀 Upgrade to Pro', upgradeBody:'You don use your free scripts finish. Get unlimited scripts for ₦15,000 per month.', upgradeNow:'Upgrade Now',
       scripts:'scripts', outputTab:'Script', libraryTab:'Your Scripts', buildTab:'Build',
       phoneLabel:'Your Phone Number', sendCode:'Send Verification Code', sending:'Dey send…',
       otpLabel:'Verification Code', verify:'Verify & Sign In', verifying:'Dey verify…', changeNum:'← Change number',
