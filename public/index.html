@@ -577,7 +577,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
     </div>
 
     <div class="d-output-card">
-      <div class="out-header"><div class="out-title" id="d-out-title">Ready to Generate</div><div class="out-acts"><button class="act-btn" onclick="copyScript()">📋 Copy</button><button class="act-btn" onclick="generate()">🔄 Redo</button></div></div>
+      <div class="out-header"><div class="out-title" id="d-out-title">Ready to Generate</div><div class="out-acts"><button class="act-btn" onclick="copyScript()">📋 Copy</button><button class="act-btn" onclick="generate()">↩ New</button></div></div>
       <div class="d-output-body">
         <div class="idle-state" id="d-idle"><div class="idle-icon">🎬</div><div class="idle-title">Pick your platform & topic</div><div class="idle-sub">Type any industry, describe your topic, and hit Generate.</div><div class="idle-checks"><span>✓ Scroll-stopping hook</span><span>✓ Scene-by-scene breakdown</span><span>✓ Platform-native CTA</span><span>✓ Caption + hashtags</span></div></div>
         <div class="loading-state" id="d-loading"><div class="spinner"></div><div class="loading-msg" id="d-loading-msg">Crafting your hook…</div></div>
@@ -660,7 +660,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
       <div class="idle-state" id="m-idle" style="padding:40px 0 20px;"><div class="idle-icon">🎬</div><div class="idle-title">Your script lives here</div><div class="idle-sub">Fill the steps and hit Generate. Takes about 10 seconds.</div><button style="margin-top:10px;background:var(--ink);color:#fff;border-radius:100px;padding:10px 24px;font-size:0.83rem;font-weight:600;cursor:pointer;" onclick="mTab('build')">← Go to Build</button></div>
       <div class="loading-state" id="m-loading"><div class="spinner"></div><div class="loading-msg" id="m-loading-msg">Crafting your hook…</div></div>
       <div class="script-result" id="m-result">
-        <div class="out-header" style="border-radius:var(--r-lg) var(--r-lg) 0 0;"><div class="out-title" id="m-out-title">—</div><div class="out-acts"><button class="act-btn" onclick="copyScript()">📋 Copy</button><button class="act-btn" onclick="generate()">🔄</button></div></div>
+        <div class="out-header" style="border-radius:var(--r-lg) var(--r-lg) 0 0;"><div class="out-title" id="m-out-title">—</div><div class="out-acts"><button class="act-btn" onclick="copyScript()">📋 Copy</button><button class="act-btn" onclick="generate()">↩</button></div></div>
         <div style="background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r-lg) var(--r-lg);padding:18px 15px;min-height:100px;" id="m-result-body"></div>
         <div class="out-footer" style="border-radius:0 0 var(--r-lg) var(--r-lg);margin-top:-1px;"><div class="out-footer-hint">💡 Read aloud once before recording.</div><button class="copy-btn-big" onclick="copyScript()">Copy</button></div>
         <!-- Mobile Feedback Bar -->
@@ -832,7 +832,7 @@ const LANGS = {
       free:'Free · Secured · Powered by Claude AI',
       idleTitle:'Pick your platform & topic', idleSub:'Type any industry, describe your topic, and hit Generate.',
       check1:'✓ Scroll-stopping hook', check2:'✓ Scene-by-scene breakdown', check3:'✓ Platform-native CTA', check4:'✓ Caption + hashtags',
-      copy:'📋 Copy', redo:'🔄 Redo', copyScript:'Copy Script',
+      copy:'📋 Copy', redo:'↩ New', copyScript:'Copy Script',
       footerHint:'💡 Read aloud once before recording. Adjust anything that doesn\'t sound like you.',
       tipsTitle:'Creator Tips',
       tip1title:'Hook in 2 seconds', tip1body:'Every platform decides in 2s if users stay. Open bold — fact, question, or hot take.',
@@ -860,7 +860,7 @@ const LANGS = {
       free:'Ọfẹ · Ailewu · Agbara nipasẹ Claude AI',
       idleTitle:'Yan pẹpẹ ati akọle rẹ', idleSub:'Tẹ ile-iṣẹ eyikeyi, ṣapejuwe akọle rẹ, ki o tẹ Ṣẹda.',
       check1:'✓ Ibẹrẹ ti o da duro skaanu', check2:'✓ Fifọ iṣẹlẹ si iṣẹlẹ', check3:'✓ CTA ti o dara fun pẹpẹ', check4:'✓ Akọwe + hashtags',
-      copy:'📋 Daakọ', redo:'🔄 Tun Ṣe', copyScript:'Daakọ Iwe-afọwọkọ',
+      copy:'📋 Daakọ', redo:'↩ Tun Ṣe', copyScript:'Daakọ Iwe-afọwọkọ',
       footerHint:'💡 Ka soke lẹẹkan ṣaaju gbigbasilẹ. Yi ohunkohun ti ko dun bi ẹ pada.',
       tipsTitle:'Awọn Imọran Onkọwe',
       tip1title:'Ifamọra ni iṣẹju 2', tip1body:'Gbogbo pẹpẹ pinnu ni 2s. Bẹrẹ ni igboya pẹlu otitọ tabi ibeere.',
@@ -888,7 +888,7 @@ const LANGS = {
       free:'Kyauta · Aminci · Ƙarfin Claude AI',
       idleTitle:'Zaɓi dandali da taken ka', idleSub:'Rubuta masana\'antu, bayyana taken ka, sannan danna Ƙirƙira.',
       check1:'✓ Farko mai tsayar da hankali', check2:'✓ Fashewar yanayi zuwa yanayi', check3:'✓ CTA na asali ga dandali', check4:'✓ Taken + hashtags',
-      copy:'📋 Kwafi', redo:'🔄 Maimaita', copyScript:'Kwafi Rubutu',
+      copy:'📋 Kwafi', redo:'↩ Maimaita', copyScript:'Kwafi Rubutu',
       footerHint:'💡 Karanta da murya sau ɗaya kafin yin rikodin. Gyara duk wanda bai ji kamar kai ba.',
       tipsTitle:'Nasihohin Mai Ƙirƙira',
       tip1title:'Farko a cikin daƙiƙa 2', tip1body:'Kowane dandali yana yanke hukunci a cikin 2s. Fara da ƙarfi — gaskiya ko tambaya.',
@@ -916,7 +916,7 @@ const LANGS = {
       free:'Efu · Nchekwa · Ike nke Claude AI',
       idleTitle:'Họrọ ikpo okwu na isiokwu gị', idleSub:'Pịnye ụlọ ọrụ ọ bụla, kọwaa isiokwu gị, wee pịa Mepụta.',
       check1:'✓ Mmalite na-eme ka ndị ọrụ kwụsị', check2:'✓ Nkewa ihe niile oge n\'oge', check3:'✓ CTA nke ikpo okwu', check4:'✓ Nkọwa + hashtags',
-      copy:'📋 Detuo', redo:'🔄 Mee ọzọ', copyScript:'Detuo Edemede',
+      copy:'📋 Detuo', redo:'↩ Mee ọzọ', copyScript:'Detuo Edemede',
       footerHint:'💡 Gụọ olu otu ugboro tupu ịdekọ. Gbanwee ihe ọ bụla adịghị dị ka gị.',
       tipsTitle:'Ndụmọdụ Onye Okike',
       tip1title:'Mmalite n\'ime sekọnd 2', tip1body:'Ikpo okwu ọ bụla na-ekpebi n\'ime 2s. Bido ike — eziokwu ma ọ bụ ajụjụ.',
@@ -944,7 +944,7 @@ const LANGS = {
       free:'Gratuit · Sécurisé · Propulsé par Claude AI',
       idleTitle:'Choisissez votre plateforme et sujet', idleSub:'Tapez n\'importe quel secteur, décrivez votre sujet et cliquez sur Générer.',
       check1:'✓ Accroche qui arrête le scroll', check2:'✓ Décomposition scène par scène', check3:'✓ CTA natif à la plateforme', check4:'✓ Légende + hashtags',
-      copy:'📋 Copier', redo:'🔄 Refaire', copyScript:'Copier le Script',
+      copy:'📋 Copier', redo:'↩ Refaire', copyScript:'Copier le Script',
       footerHint:'💡 Lisez à voix haute une fois avant d\'enregistrer. Ajustez ce qui ne vous ressemble pas.',
       tipsTitle:'Conseils Créateurs',
       tip1title:'Accroche en 2 secondes', tip1body:'Chaque plateforme décide en 2s. Commencez fort — fait, question ou opinion forte.',
@@ -972,7 +972,7 @@ const LANGS = {
       free:'E Free · E Safe · Claude AI Power Am',
       idleTitle:'Pick platform and topic', idleSub:'Type any business, describe wetin you wan talk, hit Generate.',
       check1:'✓ Hook wey go stop people for dia track', check2:'✓ Scene by scene breakdown', check3:'✓ CTA wey fit di platform', check4:'✓ Caption + hashtags',
-      copy:'📋 Copy', redo:'🔄 Do Am Again', copyScript:'Copy Script',
+      copy:'📋 Copy', redo:'↩ Do Am Again', copyScript:'Copy Script',
       footerHint:'💡 Read am loud once before you record. Change anything wey no sound like you.',
       tipsTitle:'Tips for Creator',
       tip1title:'Hook in 2 seconds', tip1body:'Every platform go decide in 2s. Start bold — fact, question, or hot take.',
@@ -1173,7 +1173,7 @@ function applyTranslations() {
   // Copy / Redo buttons
   document.querySelectorAll('.act-btn').forEach((btn, i) => {
     if (btn.textContent.includes('Copy') || btn.textContent.includes('📋')) btn.textContent = ui.copy;
-    if (btn.textContent.includes('Redo') || btn.textContent.includes('🔄')) btn.textContent = ui.redo;
+    if (btn.textContent.includes('Redo') || btn.textContent.includes('↩')) btn.textContent = ui.redo;
   });
   document.querySelectorAll('.copy-btn-big').forEach(el => el.textContent = ui.copyScript.replace('📋 ',''));
   document.querySelectorAll('.out-footer-hint').forEach(el => el.textContent = ui.footerHint);
