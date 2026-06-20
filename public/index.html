@@ -394,13 +394,32 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 
 /* ── MOBILE NAV TIGHTENING ── */
 @media(max-width:799px){
-  .nav{padding:0 12px;}
-  .logo{font-size:0.88rem;gap:6px;}
-  .logo-mark{width:26px;height:26px;font-size:0.65rem;border-radius:6px;}
+  .nav{padding:0 10px;}
+  .logo{font-size:0.85rem;gap:5px;}
+  .logo-mark{width:24px;height:24px;font-size:0.62rem;border-radius:6px;}
   .usage-pill{display:none!important;}
-  .lang-btn{padding:5px 8px;font-size:0.68rem;}
+
+  /* Hide currency picker in nav on mobile — accessible via upgrade modal */
+  #curr-wrap{display:none!important;}
+
+  /* Language button — show only current lang abbreviated */
+  .lang-btn{padding:4px 8px;font-size:0.68rem;gap:3px;}
   .lang-btn .lang-arrow{display:none;}
+  #lang-current{max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* User menu button smaller */
+  .user-menu-btn{padding:5px 8px;font-size:0.68rem;}
+  .user-menu-btn::before{content:'👤 ';}
+  .pro-badge{font-size:0.62rem;padding:3px 7px;}
   .nav-auth-btn{padding:5px 10px;font-size:0.68rem;}
+
+  /* Upgrade button in nav — hide text on very small screens */
+  .nav-upgrade-btn{
+    background:var(--accent);color:#fff;
+    border:none;border-radius:6px;
+    padding:5px 9px;font-size:0.65rem;font-weight:700;
+    cursor:pointer;white-space:nowrap;
+  }
 }
 
 /* ── MOBILE USAGE STRIP ── */
@@ -532,11 +551,8 @@ textarea,input{font-family:'DM Sans',sans-serif;}
       <p class="m-panel-sub" id="m-build-sub">Fill the steps, then Generate.</p>
 
       <!-- Mobile usage strip -->
-      <div class="m-usage-strip" id="m-usage-strip" style="display:none;">
-        <span class="m-usage-count"><span id="m-used">0</span>/<span id="m-limit">10</span></span>
-        <div class="m-usage-bar-wrap"><div class="m-usage-bar" id="m-usage-bar" style="width:0%"></div></div>
-        <span class="m-usage-label">scripts used</span>
-      </div>
+      <!-- Mobile status strip — updated dynamically -->
+      <div class="m-usage-strip" id="m-usage-strip" style="display:none;"></div>
 
       <div class="upgrade-banner" id="m-upgrade-banner" style="display:none;margin-bottom:14px;">
         <div><h3>🚀 Upgrade to Pro</h3><p>Get unlimited scripts for ₦15,000/month.</p></div>
@@ -1333,7 +1349,7 @@ function updateUsagePill() {
   const limit    = isPaid ? '∞' : (S.profile.scripts_limit || 10);
   const limitNum = isPaid ? 999 : (S.profile.scripts_limit || 10);
 
-  // Desktop pill — hide (nav shows Pro badge instead)
+  // Desktop pill — hide (nav shows status instead)
   if (pill) pill.style.display = 'none';
 
   // Mobile strip
@@ -1341,19 +1357,30 @@ function updateUsagePill() {
   if (strip) {
     strip.style.display = 'flex';
     if (isPaid) {
-      // Show Pro badge in strip
+      strip.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#fff8ee,#fff3e6);border:1.5px solid rgba(245,166,35,0.3);border-radius:12px;padding:12px 16px;margin-bottom:12px;';
       strip.innerHTML = `
-        <span style="font-size:0.85rem;font-weight:700;color:var(--accent);">⭐ Pro Account</span>
-        <span style="font-size:0.75rem;color:var(--muted);margin-left:auto;">Unlimited scripts</span>`;
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:1.2rem;">⭐</span>
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;color:#b45309;">Pro Account</div>
+            <div style="font-size:0.72rem;color:#92400e;margin-top:1px;">Unlimited scripts · All platforms</div>
+          </div>
+        </div>
+        <span style="font-size:0.7rem;font-weight:600;color:#b45309;background:rgba(245,166,35,0.2);padding:3px 8px;border-radius:100px;">${used} generated</span>`;
     } else {
+      const pct = Math.min(100, Math.round((used / limitNum) * 100));
+      const barColor = used >= limitNum ? '#e53e3e' : used >= limitNum * 0.8 ? 'var(--accent)' : 'var(--green)';
+      strip.style.cssText = 'display:flex;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:12px;gap:10px;';
       strip.innerHTML = `
-        <span class="m-usage-count"><span id="m-used">${used}</span>/<span id="m-limit">${limit}</span></span>
-        <div class="m-usage-bar-wrap"><div class="m-usage-bar" id="m-usage-bar" style="width:${Math.min(100,Math.round((used/limitNum)*100))}%;background:${used>=limitNum?'#e53e3e':used>=limitNum*0.8?'var(--accent)':'var(--green)'}"></div></div>
-        <span class="m-usage-label">scripts used</span>`;
+        <span style="font-size:0.8rem;font-weight:700;color:var(--ink);white-space:nowrap;">${used}/${limit}</span>
+        <div style="flex:1;height:6px;background:var(--border);border-radius:3px;">
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .3s;"></div>
+        </div>
+        <span style="font-size:0.72rem;color:var(--muted);white-space:nowrap;">scripts used</span>`;
     }
   }
 
-  // Upgrade banners — only show for free users who hit their limit
+  // Upgrade banners
   const showBanner = !isPaid && used >= limitNum;
   const db = document.getElementById('d-upgrade-banner');
   const mb = document.getElementById('m-upgrade-banner');
