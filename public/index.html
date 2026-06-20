@@ -498,11 +498,17 @@ textarea,input{font-family:'DM Sans',sans-serif;}
     <div>
       <div class="sec-label">🏢 Industry</div>
       <div class="ind-wrap">
-        <input type="text" class="ind-input" id="d-industry" placeholder="e.g. Hair Salon, Hospital…" autocomplete="off" oninput="onIndInput('d')" onfocus="onIndFocus('d')" onblur="onIndBlur('d')"/>
+        <input type="text" class="ind-input" id="d-industry" 
+          placeholder="e.g. Hair Salon, Hospital…" 
+          autocomplete="new-password"
+          name="business-type-search"
+          role="combobox"
+          aria-autocomplete="list"
+          oninput="onIndInput('d')" onfocus="onIndFocus('d')" onblur="onIndBlur('d')"/>
         <div class="ind-suggestions" id="d-industry-sugg"></div>
       </div>
     </div>
-    <div><div class="sec-label">📝 Topic</div><textarea class="ta" id="d-topic" style="min-height:64px;" placeholder="e.g. Why every salon needs Google Business Profile…"></textarea></div>
+    <div><div class="sec-label">📝 Topic</div><textarea class="ta" id="d-topic" style="min-height:64px;" autocomplete="off" placeholder="e.g. Why every salon needs Google Business Profile…"></textarea></div>
     <div><div class="sec-label">🎙️ Tone</div><div class="chip-row" id="d-tone-row"><button class="chip a-accent" data-v="bold_educative">Bold & Educative</button><button class="chip" data-v="conversational">Conversational</button><button class="chip" data-v="storytelling">Storytelling</button><button class="chip" data-v="hype">Hype / Promo</button><button class="chip" data-v="myth_buster">Myth Buster</button></div></div>
     <div><div class="sec-label">⏱️ Duration</div><div class="dur-row" id="d-dur-row"><button class="dur-btn" data-v="15s">15s</button><button class="dur-btn active" data-v="30s">30s</button><button class="dur-btn" data-v="60s">60s</button><button class="dur-btn" data-v="90s">90s</button></div></div>
     <div><div class="sec-label">✨ Extra Context <span style="font-weight:400;color:var(--muted);font-size:0.74rem;">(optional)</span></div><textarea class="ta" id="d-context" placeholder="e.g. Based in Lekki, Lagos. Target: working women 25-40…"></textarea></div>
@@ -561,7 +567,13 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 
       <div class="step-card open" id="m-s1"><div class="step-hdr" onclick="mStep('m-s1')"><div class="step-num">1</div><div class="step-title-g"><div class="step-title" id="step-lbl-1">Platform</div><div class="step-sel" id="m-s1-sel">—</div></div><span class="step-chev">▾</span></div><div class="step-body"><div class="step-body-in"><div class="platform-grid" id="m-plat-grid"></div></div></div></div>
 
-      <div class="step-card" id="m-s2"><div class="step-hdr" onclick="mStep('m-s2')"><div class="step-num">2</div><div class="step-title-g"><div class="step-title" id="step-lbl-2">Industry</div><div class="step-sel" id="m-s2-sel">—</div></div><span class="step-chev">▾</span></div><div class="step-body"><div class="step-body-in"><div class="ind-wrap"><input type="text" class="ind-input" id="m-industry" placeholder="e.g. Hair Salon, Hospital…" autocomplete="off" oninput="onIndInput('m')" onfocus="onIndFocus('m')" onblur="onIndBlur('m')"/><div class="ind-suggestions" id="m-industry-sugg"></div></div></div></div></div>
+      <div class="step-card" id="m-s2"><div class="step-hdr" onclick="mStep('m-s2')"><div class="step-num">2</div><div class="step-title-g"><div class="step-title" id="step-lbl-2">Industry</div><div class="step-sel" id="m-s2-sel">—</div></div><span class="step-chev">▾</span></div><div class="step-body"><div class="step-body-in"><div class="ind-wrap"><input type="text" class="ind-input" id="m-industry" 
+  placeholder="e.g. Hair Salon, Hospital…" 
+  autocomplete="new-password"
+  name="business-sector-field"
+  role="combobox"
+  aria-autocomplete="list"
+  oninput="onIndInput('m')" onfocus="onIndFocus('m')" onblur="onIndBlur('m')"/><div class="ind-suggestions" id="m-industry-sugg"></div></div></div></div></div>
 
       <div class="step-card" id="m-s3"><div class="step-hdr" onclick="mStep('m-s3')"><div class="step-num">3</div><div class="step-title-g"><div class="step-title" id="step-lbl-3">Topic</div><div class="step-sel" id="m-s3-sel">—</div></div><span class="step-chev">▾</span></div><div class="step-body"><div class="step-body-in"><textarea class="ta" id="m-topic" style="min-height:68px;" placeholder="e.g. Why every salon needs Google Business Profile…"></textarea></div></div></div>
 
@@ -1287,11 +1299,27 @@ async function loadProfile() {
 function applyPreferences() {
   if (!S.profile) return;
   if (S.profile.preferred_platform) selectPlatform(S.profile.preferred_platform);
-  if (S.profile.preferred_tone)     selectTone(S.profile.preferred_tone);
-  if (S.profile.preferred_industry) {
-    S.industry = S.profile.preferred_industry;
-    document.getElementById('d-industry').value = S.industry;
-    document.getElementById('m-industry').value = S.industry;
+  if (S.profile.preferred_tone) selectTone(S.profile.preferred_tone);
+  // Strict guard — never load email as industry
+  const ind = S.profile.preferred_industry;
+  if (ind && typeof ind === 'string' && !ind.includes('@') && ind.trim().length > 0) {
+    S.industry = ind.trim();
+    const di = document.getElementById('d-industry');
+    const mi = document.getElementById('m-industry');
+    if (di) di.value = S.industry;
+    if (mi) mi.value = S.industry;
+    const sel = document.getElementById('m-s2-sel');
+    if (sel) { sel.textContent = S.industry.slice(0,24); document.getElementById('m-s2')?.classList.add('done'); }
+  } else {
+    // Clear any bad value
+    S.industry = '';
+    const di = document.getElementById('d-industry');
+    const mi = document.getElementById('m-industry');
+    if (di) di.value = '';
+    if (mi) mi.value = '';
+    const sel = document.getElementById('m-s2-sel');
+    if (sel) sel.textContent = '—';
+    document.getElementById('m-s2')?.classList.remove('done');
   }
 }
 
@@ -1414,11 +1442,30 @@ function updateUsagePill() {
 
 function signOut() {
   S.user = null; S.token = null; S.profile = null;
+  S.industry = ''; S.topic = ''; S.context = '';
   clearTimeout(S.logoutTimer);
+  closeUserMenu();
   updateNavAuth();
-  document.getElementById('usage-pill').style.display = 'none';
-  document.getElementById('d-upgrade-banner').style.display = 'none';
-  document.getElementById('m-upgrade-banner').style.display = 'none';
+  // Clear usage displays
+  const pill = document.getElementById('usage-pill');
+  if (pill) pill.style.display = 'none';
+  const strip = document.getElementById('m-usage-strip');
+  if (strip) strip.style.display = 'none';
+  const db = document.getElementById('d-upgrade-banner');
+  const mb = document.getElementById('m-upgrade-banner');
+  if (db) db.style.display = 'none';
+  if (mb) mb.style.display = 'none';
+  // Clear industry field
+  ['d-industry','m-industry'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  // Clear step selected labels
+  ['m-s2-sel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '—';
+  });
+  document.getElementById('m-s2')?.classList.remove('done');
   showToast('👋 Signed out.');
 }
 
