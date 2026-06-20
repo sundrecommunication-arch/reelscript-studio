@@ -19,50 +19,59 @@ function loadApiKey() {
 }
 const API_KEY = loadApiKey();
 
-// ── Simple in-memory rate limiting ──
+// ── Simple rate limiting ──
 const ipHits = new Map();
 function rateLimit(req, res, next) {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
   const now = Date.now();
-  const windowMs = 60 * 60 * 1000; // 1 hour
+  const windowMs = 60 * 60 * 1000;
   const max = 20;
   const rec = ipHits.get(ip) || { count: 0, start: now };
   if (now - rec.start > windowMs) { rec.count = 1; rec.start = now; }
   else rec.count++;
   ipHits.set(ip, rec);
   if (rec.count > max) {
-    return res.status(429).json({ error: 'Too many requests. Please wait an hour and try again.' });
+    return res.status(429).json({ error: 'Too many requests. Please wait an hour.' });
   }
   next();
 }
 
-// ── Anonymous usage tracking (in-memory) ──
+// ── Anonymous usage tracking ──
 const anonUsage = new Map();
 const ANON_LIMIT = 3;
-
 function checkAnonUsage(fp) {
   const used = anonUsage.get(fp) || 0;
-  if (used >= ANON_LIMIT) {
-    return { allowed: false, used, limit: ANON_LIMIT };
-  }
+  if (used >= ANON_LIMIT) return { allowed: false, used, limit: ANON_LIMIT };
   anonUsage.set(fp, used + 1);
   return { allowed: true, used: used + 1, limit: ANON_LIMIT };
 }
 
 app.use(express.json({ limit: '10kb' }));
 
-// ── Security headers ──
+// ── Security headers (CSP allows inline scripts for single-file app) ──
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://js.paystack.co",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https:",
+      "connect-src 'self' https://api.anthropic.com https://*.supabase.co https://api.paystack.co",
+      "frame-src 'self' https://js.paystack.co https://checkout.paystack.com",
+    ].join('; ')
+  );
   next();
 });
 
 // ── Serve frontend ──
 app.use(express.static(path.join(__dirname, 'public'), {
-  maxAge: '1h', etag: true
+  maxAge: '1h', etag: true,
 }));
 
 // ── Sanitise input ──
@@ -74,11 +83,12 @@ function sanitise(str) {
 // ── Generate endpoint ──
 app.post('/api/generate', rateLimit, async (req, res) => {
   if (!API_KEY) {
-    return res.status(500).json({ error: 'API key not configured. Add ANTHROPIC_API_KEY to Render environment variables.' });
+    return res.status(500).json({
+      error: 'API key not configured. Add ANTHROPIC_API_KEY to Render environment variables.',
+    });
   }
 
   const { systemPrompt, userPrompt, fingerprint } = req.body;
-
   const cleanSystem = sanitise(systemPrompt);
   const cleanUser   = sanitise(userPrompt);
 
@@ -91,7 +101,7 @@ app.post('/api/generate', rateLimit, async (req, res) => {
   const usage = checkAnonUsage(fp);
   if (!usage.allowed) {
     return res.status(403).json({
-      error: `You have used all ${ANON_LIMIT} free scripts. Sign up to get 10 scripts per month.`,
+      error: `You have used all ${ANON_LIMIT} free scripts this session. Sign up to get 10 per month.`,
       showSignup: true,
       usage,
     });
@@ -117,7 +127,7 @@ app.post('/api/generate', rateLimit, async (req, res) => {
 
     if (!response.ok) {
       return res.status(response.status).json({
-        error: data.error?.message || `API error (${response.status})`
+        error: data.error?.message || `API error (${response.status})`,
       });
     }
 
