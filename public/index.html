@@ -264,6 +264,49 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .copy-btn-big{background:var(--ink);color:#fff;border-radius:8px;padding:8px 16px;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .copy-btn-big:hover{background:var(--accent);}
 
+/* ── FEEDBACK BAR ── */
+.feedback-bar{
+  border-top:1px solid var(--border);
+  background:#F7F5F0;
+  padding:12px 16px;
+  display:none;
+}
+.feedback-bar.show{display:block;}
+.feedback-label{
+  font-size:0.7rem;font-weight:700;
+  letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:7px;
+}
+.feedback-row{display:flex;gap:8px;align-items:flex-end;}
+.feedback-input{
+  flex:1;border:1.5px solid var(--border);
+  border-radius:var(--r);padding:9px 12px;
+  font-size:0.84rem;font-family:'DM Sans',sans-serif;
+  background:#fff;color:var(--ink);
+  resize:none;min-height:40px;max-height:100px;
+  transition:border-color .15s;line-height:1.4;
+}
+.feedback-input:focus{outline:none;border-color:var(--accent);}
+.feedback-input::placeholder{color:#BBB;}
+.feedback-btn{
+  background:var(--accent);color:#fff;
+  border:none;border-radius:var(--r);
+  padding:9px 16px;font-size:0.82rem;font-weight:700;
+  cursor:pointer;transition:all .15s;
+  white-space:nowrap;flex-shrink:0;
+  font-family:'Syne',sans-serif;
+}
+.feedback-btn:hover{background:#e04e00;}
+.feedback-btn:disabled{background:#ccc;cursor:not-allowed;}
+.feedback-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.feedback-chip{
+  border:1px solid var(--border);background:#fff;
+  border-radius:100px;padding:4px 10px;
+  font-size:0.72rem;font-weight:500;cursor:pointer;
+  transition:all .12s;color:var(--ink);
+}
+.feedback-chip:hover{border-color:var(--accent);color:var(--accent);background:#fff8f5;}
+
 /* ── UPGRADE BANNER ── */
 .upgrade-banner{background:linear-gradient(135deg,#FF5C00,#ff8c42);color:#fff;border-radius:var(--r-lg);padding:20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
 .upgrade-banner h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:4px;}
@@ -539,6 +582,22 @@ textarea,input{font-family:'DM Sans',sans-serif;}
         <div class="script-result" id="d-result"></div>
       </div>
       <div class="out-footer" id="d-footer" style="display:none;"><div class="out-footer-hint">💡 Read aloud once before recording. Adjust anything that doesn't sound like you.</div><button class="copy-btn-big" onclick="copyScript()">Copy Script</button></div>
+      <!-- Desktop Feedback Bar -->
+      <div class="feedback-bar" id="d-feedback-bar">
+        <div class="feedback-label">✨ Improve this script</div>
+        <div class="feedback-chips">
+          <span class="feedback-chip" onclick="setFeedback('d','Make the hook more attention-grabbing')">🎣 Stronger hook</span>
+          <span class="feedback-chip" onclick="setFeedback('d','Make it shorter and punchier')">✂️ Shorter</span>
+          <span class="feedback-chip" onclick="setFeedback('d','Make it funnier and more entertaining')">😄 More fun</span>
+          <span class="feedback-chip" onclick="setFeedback('d','Make it more professional and formal')">💼 More formal</span>
+          <span class="feedback-chip" onclick="setFeedback('d','Add more urgency and FOMO')">🔥 Add urgency</span>
+          <span class="feedback-chip" onclick="setFeedback('d','Rewrite with a completely different angle')">🔄 Different angle</span>
+        </div>
+        <div class="feedback-row">
+          <textarea class="feedback-input" id="d-feedback-input" placeholder="e.g. Make the hook stronger, add more humour, shorten the CTA…" rows="1"></textarea>
+          <button class="feedback-btn" id="d-feedback-btn" onclick="improveScript('d')">⚡ Improve</button>
+        </div>
+      </div>
     </div>
 
     <div class="divider">Creator Tips</div>
@@ -602,6 +661,21 @@ textarea,input{font-family:'DM Sans',sans-serif;}
         <div class="out-header" style="border-radius:var(--r-lg) var(--r-lg) 0 0;"><div class="out-title" id="m-out-title">—</div><div class="out-acts"><button class="act-btn" onclick="copyScript()">📋 Copy</button><button class="act-btn" onclick="generate()">🔄</button></div></div>
         <div style="background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r-lg) var(--r-lg);padding:18px 15px;" id="m-result-body"></div>
         <div class="out-footer" style="border-radius:0 0 var(--r-lg) var(--r-lg);margin-top:-1px;"><div class="out-footer-hint">💡 Read aloud once before recording.</div><button class="copy-btn-big" onclick="copyScript()">Copy</button></div>
+        <!-- Mobile Feedback Bar -->
+        <div class="feedback-bar" id="m-feedback-bar" style="border-radius:0 0 var(--r-lg) var(--r-lg);margin-top:2px;">
+          <div class="feedback-label">✨ Improve this script</div>
+          <div class="feedback-chips">
+            <span class="feedback-chip" onclick="setFeedback('m','Make the hook more attention-grabbing')">🎣 Stronger hook</span>
+            <span class="feedback-chip" onclick="setFeedback('m','Make it shorter and punchier')">✂️ Shorter</span>
+            <span class="feedback-chip" onclick="setFeedback('m','Make it funnier and more entertaining')">😄 More fun</span>
+            <span class="feedback-chip" onclick="setFeedback('m','Add more urgency and FOMO')">🔥 Add urgency</span>
+            <span class="feedback-chip" onclick="setFeedback('m','Rewrite with a completely different angle')">🔄 New angle</span>
+          </div>
+          <div class="feedback-row">
+            <textarea class="feedback-input" id="m-feedback-input" placeholder="e.g. Make it funnier, stronger hook…" rows="1"></textarea>
+            <button class="feedback-btn" id="m-feedback-btn" onclick="improveScript('m')">⚡</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1830,33 +1904,33 @@ function parseBlocks(text) {
 function renderResult(text, title, isMobile) {
   const html = parseBlocks(text);
   if (isMobile) {
-    // Hide loader
     document.getElementById('m-loading').classList.remove('on');
     document.getElementById('m-idle').style.display = 'none';
-    // Show result
     document.getElementById('m-out-title').textContent = title;
     document.getElementById('m-result-body').innerHTML = html;
     document.getElementById('m-result').style.display = 'block';
     document.getElementById('m-result').classList.add('on');
-    // Make sure we are on the output tab
     document.querySelectorAll('.m-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('m-panel-output').classList.add('active');
     document.getElementById('m-tab-output').classList.add('active');
     document.getElementById('m-gen-bar').style.display = 'none';
     document.getElementById('m-out-dot').classList.add('show');
-    // Scroll to top
     document.getElementById('m-scroll').scrollTop = 0;
+    // Show feedback bar
+    document.getElementById('m-feedback-bar').classList.add('show');
+    document.getElementById('m-feedback-input').value = '';
   } else {
-    // Hide loader
     document.getElementById('d-loading').classList.remove('on');
     document.getElementById('d-idle').style.display = 'none';
-    // Show result
     document.getElementById('d-out-title').textContent = title;
     document.getElementById('d-result').innerHTML = html;
     document.getElementById('d-result').style.display = 'block';
     document.getElementById('d-result').classList.add('on');
     document.getElementById('d-footer').style.display = 'flex';
+    // Show feedback bar
+    document.getElementById('d-feedback-bar').classList.add('show');
+    document.getElementById('d-feedback-input').value = '';
   }
 }
 
@@ -1985,6 +2059,110 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 /* ══════════════════════════════════════
    COPY & TOAST
 ══════════════════════════════════════ */
+/* ══════════════════════════════════════
+   IMPROVE SCRIPT WITH FEEDBACK
+══════════════════════════════════════ */
+function setFeedback(pfx, text) {
+  const input = document.getElementById(pfx + '-feedback-input');
+  if (input) {
+    input.value = text;
+    input.focus();
+  }
+}
+
+async function improveScript(pfx) {
+  const feedbackInput = document.getElementById(pfx + '-feedback-input');
+  const feedback = feedbackInput?.value?.trim();
+  if (!feedback) { showToast('👆 Tell us what to improve first'); return; }
+  if (!S.lastScript) { showToast('Generate a script first'); return; }
+
+  const btn = document.getElementById(pfx + '-feedback-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+
+  const isMobile = pfx === 'm';
+
+  // Show loading state without clearing current script
+  const loadingEl = document.getElementById(isMobile ? 'm-loading' : 'd-loading');
+  const resultEl  = document.getElementById(isMobile ? 'm-result' : 'd-result');
+  if (loadingEl) loadingEl.classList.add('on');
+  if (resultEl)  resultEl.classList.remove('on');
+  if (isMobile) {
+    document.getElementById('m-result').style.display = 'none';
+    document.getElementById('m-feedback-bar').classList.remove('show');
+  } else {
+    document.getElementById('d-feedback-bar').classList.remove('show');
+  }
+
+  const plat = PLATFORMS.find(p => p.id === S.platform) || PLATFORMS[0];
+
+  const sys = `You are an expert video script editor. You have written a script and now need to improve it based on user feedback.
+
+Platform: ${plat.name}
+Industry: ${S.industry}
+Tone: ${TONE_GUIDE[S.tone] || S.tone}
+
+LANGUAGE INSTRUCTION: ${LANGS[LANG]?.ui?.scriptLang || 'Write in English.'}
+
+Keep the same format with these exact headers:
+🎬 HOOK (0-3s):
+📚 CONTENT:
+📣 CTA:
+📝 CAPTION:
+#️⃣ HASHTAGS:
+
+Only change what the feedback asks for. Keep everything else intact.`;
+
+  const usr = `Here is the current script:
+
+${S.lastScript}
+
+User feedback — please improve based on this:
+"${feedback}"
+
+Rewrite the full script with the improvement applied. Keep the same industry, platform and general message.`;
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(S.token ? { 'Authorization': 'Bearer ' + S.token } : {})
+      },
+      body: JSON.stringify({
+        systemPrompt: sys,
+        userPrompt:   usr,
+        fingerprint:  FP,
+        platform:     S.platform,
+        industry:     S.industry,
+        topic:        S.topic + ' [improved]',
+        tone:         S.tone,
+        duration:     S.duration,
+      }),
+    });
+
+    const data = await res.json();
+    if (loadingEl) loadingEl.classList.remove('on');
+
+    if (!res.ok) {
+      if (data.showUpgrade) { openUpgrade(); return; }
+      throw new Error(data.error || 'Improvement failed');
+    }
+
+    S.lastScript = data.text;
+    renderResult(data.text, S.lastTitle + ' ✨', isMobile);
+    showToast('✨ Script improved!');
+    if (S.token) loadProfile();
+
+  } catch (err) {
+    if (loadingEl) loadingEl.classList.remove('on');
+    showToast('❌ ' + err.message);
+    // Restore previous result
+    renderResult(S.lastScript, S.lastTitle, isMobile);
+  }
+
+  if (btn) { btn.disabled = false; btn.innerHTML = isMobile ? '⚡' : '⚡ Improve'; }
+}
+
 async function copyScript() {
   if (!S.lastScript) { showToast('Nothing to copy yet!'); return; }
   try { await navigator.clipboard.writeText(S.lastScript); showToast('📋 Script copied!'); }
