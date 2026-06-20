@@ -172,6 +172,8 @@ textarea,input{font-family:'DM Sans',sans-serif;}
   .spinner { width: 36px; height: 36px; }
   /* Panel padding */
   .m-panel { padding: 16px 14px 0; }
+  /* Output panel needs extra bottom space for feedback bar + tab bar */
+  #m-panel-output { padding-bottom: 20px; }
   /* Step body */
   .step-body-in { padding: 0 12px 16px; }
   /* Step number */
@@ -349,7 +351,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 /* ── MOBILE LAYOUT ── */
 .desktop-wrap{display:none;}
 .mobile-shell{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h));height:calc(100dvh - var(--nav-h));overflow:hidden;}
-.m-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(var(--tab-h) + var(--safe-b) + 80px);}
+.m-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(var(--tab-h) + var(--safe-b) + 140px);}
 .m-panel{display:none;padding:18px 15px 0;}
 .m-panel.active{display:block;}
 .m-panel-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-0.03em;line-height:1.1;margin-bottom:4px;}
@@ -659,7 +661,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
       <div class="loading-state" id="m-loading"><div class="spinner"></div><div class="loading-msg" id="m-loading-msg">Crafting your hook…</div></div>
       <div class="script-result" id="m-result">
         <div class="out-header" style="border-radius:var(--r-lg) var(--r-lg) 0 0;"><div class="out-title" id="m-out-title">—</div><div class="out-acts"><button class="act-btn" onclick="copyScript()">📋 Copy</button><button class="act-btn" onclick="generate()">🔄</button></div></div>
-        <div style="background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r-lg) var(--r-lg);padding:18px 15px;" id="m-result-body"></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r-lg) var(--r-lg);padding:18px 15px;min-height:100px;" id="m-result-body"></div>
         <div class="out-footer" style="border-radius:0 0 var(--r-lg) var(--r-lg);margin-top:-1px;"><div class="out-footer-hint">💡 Read aloud once before recording.</div><button class="copy-btn-big" onclick="copyScript()">Copy</button></div>
         <!-- Mobile Feedback Bar -->
         <div class="feedback-bar" id="m-feedback-bar" style="border-radius:0 0 var(--r-lg) var(--r-lg);margin-top:2px;">
