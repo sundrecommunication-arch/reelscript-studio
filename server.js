@@ -223,9 +223,64 @@ app.get('/api/profile', (req, res) => {
   });
 });
 
+
 /* ════════════════════════════════
-   GENERATE SCRIPT
+   SCRIPTS STORAGE
 ════════════════════════════════ */
+const SCRIPTS_PATH = path.join(__dirname, 'scripts.json');
+
+function loadScripts() {
+  try {
+    if (existsSync(SCRIPTS_PATH)) {
+      const raw = readFileSync(SCRIPTS_PATH, 'utf8');
+      return JSON.parse(raw); // { email: [scripts...] }
+    }
+  } catch (err) { console.error('Failed to load scripts.json:', err.message); }
+  return {};
+}
+function saveScripts(scriptsDb) {
+  try { writeFileSync(SCRIPTS_PATH, JSON.stringify(scriptsDb, null, 2), 'utf8'); }
+  catch (err) { console.error('Failed to save scripts.json:', err.message); }
+}
+
+const scriptsDb = loadScripts();
+
+function getUserScripts(email) {
+  return scriptsDb[email] || [];
+}
+function addUserScript(email, script) {
+  if (!scriptsDb[email]) scriptsDb[email] = [];
+  scriptsDb[email].unshift(script); // newest first
+  if (scriptsDb[email].length > 50) scriptsDb[email].pop(); // max 50 per user
+  saveScripts(scriptsDb);
+}
+function deleteUserScript(email, id) {
+  if (!scriptsDb[email]) return false;
+  const before = scriptsDb[email].length;
+  scriptsDb[email] = scriptsDb[email].filter(s => s.id !== id);
+  if (scriptsDb[email].length !== before) { saveScripts(scriptsDb); return true; }
+  return false;
+}
+
+/* ── GET scripts ── */
+app.get('/api/scripts', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const user  = token ? sessions.get(token) : null;
+  if (!user) return res.status(401).json({ error: 'Not authenticated.' });
+  const scripts = getUserScripts(user.email);
+  res.json({ scripts, total: scripts.length });
+});
+
+/* ── DELETE script ── */
+app.delete('/api/scripts/:id', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const user  = token ? sessions.get(token) : null;
+  if (!user) return res.status(401).json({ error: 'Not authenticated.' });
+  deleteUserScript(user.email, req.params.id);
+  res.json({ success: true });
+});
+
+
 app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
   if (!ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'API key not configured. Add ANTHROPIC_API_KEY to Render environment variables.' });
@@ -307,6 +362,21 @@ app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
     }
 
     const text = data.content?.map(b => b.text || '').join('') || '';
+
+    // Save script to user's library
+    if (user && text) {
+      addUserScript(user.email, {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+        platform:    sanitiseShort(req.body.platform  || ''),
+        industry:    sanitiseShort(req.body.industry  || ''),
+        topic:       sanitiseShort(req.body.topic     || ''),
+        tone:        sanitiseShort(req.body.tone      || ''),
+        duration:    sanitiseShort(req.body.duration  || ''),
+        script_text: text,
+        created_at:  new Date().toISOString(),
+      });
+    }
+
     res.json({ text, usage });
 
   } catch (err) {

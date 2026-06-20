@@ -1080,11 +1080,11 @@ async function loadProfile() {
     });
     if (!res.ok) { S.token = null; S.user = null; return; }
     const data = await res.json();
-    // Server returns flat profile object directly
     S.profile = data;
     applyPreferences();
     updateNavAuth();
     updateUsagePill();
+    loadLibrary(); // load scripts whenever profile loads
   } catch {}
 }
 
@@ -1551,22 +1551,28 @@ async function loadLibrary() {
   } catch {}
 }
 function renderLibrary(scripts) {
-  const sub = document.getElementById('m-lib-sub');
+  const sub  = document.getElementById('m-lib-sub');
   const list = document.getElementById('m-library-list');
-  if (!S.user) { sub.textContent='Sign in to save and access your scripts permanently.'; list.innerHTML=''; return; }
-  sub.textContent = scripts.length ? `${scripts.length} scripts saved to your account.` : 'No scripts yet. Generate your first one!';
-  if (!scripts.length) { list.innerHTML=''; return; }
-  const plColors={'instagram':'#E1306C','youtube':'#FF0000','tiktok':'#333','facebook':'#1877F2','linkedin':'#0A66C2','twitter':'#333'};
-  list.innerHTML = scripts.map(s=>`
+  if (!S.token) {
+    if (sub) sub.textContent = 'Sign in to save and access your scripts permanently.';
+    if (list) list.innerHTML = '';
+    return;
+  }
+  if (sub) sub.textContent = scripts.length
+    ? `${scripts.length} script${scripts.length === 1 ? '' : 's'} saved to your account.`
+    : 'No scripts yet — generate your first one!';
+  if (!scripts.length) { if (list) list.innerHTML = ''; return; }
+  const plColors = {instagram:'#E1306C',youtube:'#FF0000',tiktok:'#333',facebook:'#1877F2',linkedin:'#0A66C2',twitter:'#333'};
+  list.innerHTML = scripts.map(s => `
     <div class="lib-card" id="lib-${s.id}">
       <div class="lib-card-top" onclick="toggleLib('${s.id}')">
-        <span class="lib-plat-tag" style="background:${plColors[s.platform]||'#333'}">${s.platform}</span>
-        <span class="lib-industry">${s.industry} — ${s.topic.slice(0,30)}</span>
+        <span class="lib-plat-tag" style="background:${plColors[s.platform]||'#555'}">${s.platform}</span>
+        <span class="lib-industry">${s.industry} — ${(s.topic||'').slice(0,28)}</span>
         <span class="lib-time">${new Date(s.created_at).toLocaleDateString('en-NG',{day:'numeric',month:'short'})}</span>
       </div>
-      <div class="lib-preview">${s.script_text.slice(0,200)}…</div>
+      <div class="lib-preview">${(s.script_text||'').slice(0,200)}…</div>
       <div class="lib-actions" style="display:none;">
-        <button class="lib-btn primary" onclick="restoreScript('${s.id}')">Load Script</button>
+        <button class="lib-btn primary" onclick="restoreScript('${s.id}')">Load</button>
         <button class="lib-btn danger" onclick="deleteScript('${s.id}')">Delete</button>
       </div>
     </div>`).join('');
