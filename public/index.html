@@ -250,8 +250,8 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 
 /* ── MOBILE LAYOUT ── */
 .desktop-wrap{display:none;}
-.mobile-shell{display:flex;flex-direction:column;}
-.m-scroll{overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(var(--tab-h) + var(--safe-b) + 74px);}
+.mobile-shell{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h));height:calc(100dvh - var(--nav-h));overflow:hidden;}
+.m-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(var(--tab-h) + var(--safe-b) + 80px);}
 .m-panel{display:none;padding:18px 15px 0;}
 .m-panel.active{display:block;}
 .m-panel-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-0.03em;line-height:1.1;margin-bottom:4px;}
