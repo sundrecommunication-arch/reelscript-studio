@@ -438,7 +438,8 @@ textarea,input{font-family:'DM Sans',sans-serif;}
     <div class="modal-body">
       <div id="auth-step-phone">
         <div class="modal-error" id="auth-error"></div>
-        <div><div class="modal-label">Phone Number</div><input type="tel" class="modal-input" id="auth-phone" placeholder="+2348012345678"/></div>
+        <div><div class="modal-label">Phone Number</div><input type="tel" class="modal-input" id="auth-phone" placeholder="+2348012345678 (start with +234)"/></div>
+        <p style="font-size:0.75rem;color:var(--muted);margin-top:-8px;">⚠️ Use international format: <strong>+234</strong> then your number without the leading 0. Example: <strong>+2348169685553</strong></p>
         <button class="modal-btn" id="auth-send-btn" onclick="sendOTP()">Send Verification Code</button>
         <div class="modal-divider">or</div>
         <div class="modal-note">By signing in you agree to our terms of service. Your data is encrypted and never shared.</div>
@@ -1261,20 +1262,29 @@ Uniqueness seed: ${Date.now()} — use this to ensure your response is fresh and
 }
 
 function setLoading(on, isMobile) {
-  ['d-gen-btn','m-gen-btn'].forEach(id=>{const b=document.getElementById(id);if(!b)return;b.disabled=on;b.innerHTML=on?'<span>⏳</span> Generating…':'<span>🎬</span> Generate Script';});
-  if (isMobile) {
-    mTab('output');
-    document.getElementById('m-gen-bar').style.display='none';
-    document.getElementById('m-idle').style.display='none';
-    document.getElementById('m-result').classList.toggle('on',false);
-    document.getElementById('m-loading').classList.toggle('on',on);
-    if (!on) document.getElementById('m-gen-bar').style.display='none';
-  } else {
-    document.getElementById('d-idle').style.display='none';
-    document.getElementById('d-result').classList.toggle('on',false);
-    document.getElementById('d-loading').classList.toggle('on',on);
-    document.getElementById('d-footer').style.display='none';
+  // Update button state
+  ['d-gen-btn','m-gen-btn'].forEach(id => {
+    const b = document.getElementById(id); if (!b) return;
+    b.disabled = on;
+    b.innerHTML = on ? '<span>⏳</span> Generating…' : '<span>🎬</span> Generate Script';
+  });
+
+  if (on) {
+    // STARTING: show loader, hide everything else
+    if (isMobile) {
+      mTab('output');
+      document.getElementById('m-gen-bar').style.display = 'none';
+      document.getElementById('m-idle').style.display = 'none';
+      document.getElementById('m-result').classList.remove('on');
+      document.getElementById('m-loading').classList.add('on');
+    } else {
+      document.getElementById('d-idle').style.display = 'none';
+      document.getElementById('d-result').classList.remove('on');
+      document.getElementById('d-loading').classList.add('on');
+      document.getElementById('d-footer').style.display = 'none';
+    }
   }
+  // When turning OFF — do nothing. renderResult handles showing the output.
 }
 
 /* ══════════════════════════════════════
@@ -1290,17 +1300,31 @@ function parseBlocks(text) {
 function renderResult(text, title, isMobile) {
   const html = parseBlocks(text);
   if (isMobile) {
+    // Hide loader
     document.getElementById('m-loading').classList.remove('on');
     document.getElementById('m-idle').style.display = 'none';
+    // Show result
     document.getElementById('m-out-title').textContent = title;
     document.getElementById('m-result-body').innerHTML = html;
+    document.getElementById('m-result').style.display = 'block';
     document.getElementById('m-result').classList.add('on');
+    // Make sure we are on the output tab
+    document.querySelectorAll('.m-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('m-panel-output').classList.add('active');
+    document.getElementById('m-tab-output').classList.add('active');
     document.getElementById('m-gen-bar').style.display = 'none';
+    document.getElementById('m-out-dot').classList.add('show');
+    // Scroll to top
+    document.getElementById('m-scroll').scrollTop = 0;
   } else {
+    // Hide loader
     document.getElementById('d-loading').classList.remove('on');
     document.getElementById('d-idle').style.display = 'none';
+    // Show result
     document.getElementById('d-out-title').textContent = title;
     document.getElementById('d-result').innerHTML = html;
+    document.getElementById('d-result').style.display = 'block';
     document.getElementById('d-result').classList.add('on');
     document.getElementById('d-footer').style.display = 'flex';
   }
