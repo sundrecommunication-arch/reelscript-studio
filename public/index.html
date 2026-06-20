@@ -266,7 +266,36 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .copy-btn-big{background:var(--ink);color:#fff;border-radius:8px;padding:8px 16px;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .copy-btn-big:hover{background:var(--accent);}
 
-/* ── FEEDBACK BAR ── */
+/* ── AUDIENCE TARGETING ── */
+.audience-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.audience-field{display:flex;flex-direction:column;gap:4px;}
+.audience-field.full{grid-column:1/-1;}
+.audience-label{font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
+.audience-input{
+  border:1.5px solid var(--border);border-radius:var(--r);
+  padding:9px 11px;font-size:0.83rem;
+  background:var(--paper);color:var(--ink);
+  font-family:'DM Sans',sans-serif;
+  transition:border-color .15s;width:100%;
+}
+.audience-input:focus{outline:none;border-color:var(--accent);}
+.audience-input::placeholder{color:#BBB;}
+.audience-chips-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px;}
+.aud-chip{
+  border:1.5px solid var(--border);background:var(--paper);
+  border-radius:100px;padding:4px 10px;
+  font-size:0.72rem;font-weight:500;cursor:pointer;
+  transition:all .12s;color:var(--ink);white-space:nowrap;
+}
+.aud-chip:hover{border-color:var(--accent);color:var(--accent);}
+.aud-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.audience-preview{
+  background:linear-gradient(135deg,#f0f7ff,#e8f4ff);
+  border:1px solid #c3ddf5;border-radius:var(--r);
+  padding:8px 12px;font-size:0.76rem;color:#1a4a7a;
+  line-height:1.5;margin-top:6px;display:none;
+}
+.audience-preview.show{display:block;}
 .feedback-bar{
   border-top:1px solid var(--border);
   background:#F7F5F0;
@@ -559,7 +588,59 @@ textarea,input{font-family:'DM Sans',sans-serif;}
     <div><div class="sec-label">📝 Topic</div><textarea class="ta" id="d-topic" style="min-height:64px;" autocomplete="off" placeholder="e.g. Why every salon needs Google Business Profile…"></textarea></div>
     <div><div class="sec-label">🎙️ Tone</div><div class="chip-row" id="d-tone-row"><button class="chip a-accent" data-v="bold_educative">Bold & Educative</button><button class="chip" data-v="conversational">Conversational</button><button class="chip" data-v="storytelling">Storytelling</button><button class="chip" data-v="hype">Hype / Promo</button><button class="chip" data-v="myth_buster">Myth Buster</button></div></div>
     <div><div class="sec-label">⏱️ Duration</div><div class="dur-row" id="d-dur-row"><button class="dur-btn" data-v="15s">15s</button><button class="dur-btn active" data-v="30s">30s</button><button class="dur-btn" data-v="60s">60s</button><button class="dur-btn" data-v="90s">90s</button></div></div>
-    <div><div class="sec-label">✨ Extra Context <span style="font-weight:400;color:var(--muted);font-size:0.74rem;">(optional)</span></div><textarea class="ta" id="d-context" placeholder="e.g. Based in Lekki, Lagos. Target: working women 25-40…"></textarea></div>
+    <div><div class="sec-label">✨ Extra Context <span style="font-weight:400;color:var(--muted);font-size:0.74rem;">(optional)</span></div><textarea class="ta" id="d-context" autocomplete="off" placeholder="e.g. Based in Lekki, Lagos. Target: working women 25-40…"></textarea></div>
+
+    <!-- AUDIENCE TARGETING -->
+    <div id="d-audience-section">
+      <div class="sec-label" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>🎯 Audience Profile <span style="font-weight:400;color:var(--muted);font-size:0.74rem;">(optional)</span></span>
+        <button onclick="toggleAudience('d')" id="d-aud-toggle" style="font-size:0.7rem;color:var(--accent);font-weight:600;background:none;border:none;cursor:pointer;">+ Add</button>
+      </div>
+      <div id="d-audience-fields" style="display:none;margin-top:8px;">
+        <div class="audience-grid">
+          <div class="audience-field full">
+            <div class="audience-label">📍 City / Location</div>
+            <input class="audience-input" id="d-aud-city" placeholder="e.g. Lagos, Accra, Nairobi, Cairo…" autocomplete="off"/>
+            <div class="audience-chips-row">
+              <span class="aud-chip" onclick="setAudChip('d','city','Lagos, Nigeria')">Lagos</span>
+              <span class="aud-chip" onclick="setAudChip('d','city','Abuja, Nigeria')">Abuja</span>
+              <span class="aud-chip" onclick="setAudChip('d','city','Accra, Ghana')">Accra</span>
+              <span class="aud-chip" onclick="setAudChip('d','city','Nairobi, Kenya')">Nairobi</span>
+              <span class="aud-chip" onclick="setAudChip('d','city','Cairo, Egypt')">Cairo</span>
+              <span class="aud-chip" onclick="setAudChip('d','city','Johannesburg, South Africa')">Joburg</span>
+              <span class="aud-chip" onclick="setAudChip('d','city','Dakar, Senegal')">Dakar</span>
+            </div>
+          </div>
+          <div class="audience-field">
+            <div class="audience-label">🎂 Age Range</div>
+            <div class="audience-chips-row">
+              <span class="aud-chip" onclick="setAudChip('d','age','18-24')">18-24</span>
+              <span class="aud-chip" onclick="setAudChip('d','age','25-34')">25-34</span>
+              <span class="aud-chip" onclick="setAudChip('d','age','35-44')">35-44</span>
+              <span class="aud-chip" onclick="setAudChip('d','age','45+')">45+</span>
+            </div>
+            <input class="audience-input" id="d-aud-age" placeholder="or type age…" autocomplete="off" style="margin-top:5px;"/>
+          </div>
+          <div class="audience-field">
+            <div class="audience-label">👤 Gender</div>
+            <div class="audience-chips-row">
+              <span class="aud-chip" onclick="setAudChip('d','gender','Women')">Women</span>
+              <span class="aud-chip" onclick="setAudChip('d','gender','Men')">Men</span>
+              <span class="aud-chip" onclick="setAudChip('d','gender','Everyone')">Everyone</span>
+            </div>
+          </div>
+          <div class="audience-field full">
+            <div class="audience-label">💡 Interests</div>
+            <input class="audience-input" id="d-aud-interests" placeholder="e.g. fashion, fitness, entrepreneurship, beauty…" autocomplete="off"/>
+          </div>
+          <div class="audience-field full">
+            <div class="audience-label">😣 Pain Points</div>
+            <input class="audience-input" id="d-aud-pain" placeholder="e.g. struggling to grow hair, no time to cook, can't afford quality…" autocomplete="off"/>
+          </div>
+        </div>
+        <div class="audience-preview" id="d-aud-preview"></div>
+      </div>
+    </div>
     <button class="d-gen-btn" id="d-gen-btn" onclick="generate()"><span>🎬</span> Generate Script</button>
     <p style="text-align:center;font-size:0.68rem;color:var(--muted);">Free · Secured · Powered by Claude AI</p>
   </aside>
@@ -646,6 +727,63 @@ textarea,input{font-family:'DM Sans',sans-serif;}
       <div class="step-card" id="m-s5"><div class="step-hdr" onclick="mStep('m-s5')"><div class="step-num">5</div><div class="step-title-g"><div class="step-title" id="step-lbl-5">Duration</div><div class="step-sel" id="m-s5-sel">30 seconds</div></div><span class="step-chev">▾</span></div><div class="step-body"><div class="step-body-in"><div class="dur-row" id="m-dur-row"><button class="dur-btn" data-v="15s">15s</button><button class="dur-btn active" data-v="30s">30s</button><button class="dur-btn" data-v="60s">60s</button><button class="dur-btn" data-v="90s">90s</button></div></div></div></div>
 
       <div class="step-card" id="m-s6"><div class="step-hdr" onclick="mStep('m-s6')"><div class="step-num">6</div><div class="step-title-g"><div class="step-title" id="step-lbl-6">Extra Context <span style="font-weight:400;color:var(--muted);font-size:0.71rem;">(optional)</span></div></div><span class="step-chev">▾</span></div><div class="step-body"><div class="step-body-in"><textarea class="ta" id="m-context" placeholder="e.g. Based in Lekki, Lagos. Target: working women 25-40…"></textarea></div></div></div>
+
+      <!-- STEP 7: AUDIENCE TARGETING -->
+      <div class="step-card" id="m-s7">
+        <div class="step-hdr" onclick="mStep('m-s7')">
+          <div class="step-num">7</div>
+          <div class="step-title-g">
+            <div class="step-title">🎯 Audience Profile <span style="font-weight:400;color:var(--muted);font-size:0.68rem;">(optional)</span></div>
+            <div class="step-sel" id="m-s7-sel">—</div>
+          </div>
+          <span class="step-chev">▾</span>
+        </div>
+        <div class="step-body">
+          <div class="step-body-in">
+            <div class="audience-grid">
+              <div class="audience-field full">
+                <div class="audience-label">📍 City / Location</div>
+                <input class="audience-input" id="m-aud-city" placeholder="e.g. Lagos, Accra, Nairobi…" autocomplete="off" oninput="updateAudPreview('m')"/>
+                <div class="audience-chips-row">
+                  <span class="aud-chip" onclick="setAudChip('m','city','Lagos, Nigeria')">Lagos</span>
+                  <span class="aud-chip" onclick="setAudChip('m','city','Abuja, Nigeria')">Abuja</span>
+                  <span class="aud-chip" onclick="setAudChip('m','city','Accra, Ghana')">Accra</span>
+                  <span class="aud-chip" onclick="setAudChip('m','city','Nairobi, Kenya')">Nairobi</span>
+                  <span class="aud-chip" onclick="setAudChip('m','city','Cairo, Egypt')">Cairo</span>
+                  <span class="aud-chip" onclick="setAudChip('m','city','Johannesburg, South Africa')">Joburg</span>
+                  <span class="aud-chip" onclick="setAudChip('m','city','Dakar, Senegal')">Dakar</span>
+                </div>
+              </div>
+              <div class="audience-field">
+                <div class="audience-label">🎂 Age Range</div>
+                <div class="audience-chips-row">
+                  <span class="aud-chip" onclick="setAudChip('m','age','18-24')">18-24</span>
+                  <span class="aud-chip" onclick="setAudChip('m','age','25-34')">25-34</span>
+                  <span class="aud-chip" onclick="setAudChip('m','age','35-44')">35-44</span>
+                  <span class="aud-chip" onclick="setAudChip('m','age','45+')">45+</span>
+                </div>
+              </div>
+              <div class="audience-field">
+                <div class="audience-label">👤 Gender</div>
+                <div class="audience-chips-row">
+                  <span class="aud-chip" onclick="setAudChip('m','gender','Women')">Women</span>
+                  <span class="aud-chip" onclick="setAudChip('m','gender','Men')">Men</span>
+                  <span class="aud-chip" onclick="setAudChip('m','gender','Everyone')">Everyone</span>
+                </div>
+              </div>
+              <div class="audience-field full">
+                <div class="audience-label">💡 Interests</div>
+                <input class="audience-input" id="m-aud-interests" placeholder="e.g. fashion, fitness, beauty…" autocomplete="off" oninput="updateAudPreview('m')"/>
+              </div>
+              <div class="audience-field full">
+                <div class="audience-label">😣 Pain Points</div>
+                <input class="audience-input" id="m-aud-pain" placeholder="e.g. struggling to grow hair, no time to cook…" autocomplete="off" oninput="updateAudPreview('m')"/>
+              </div>
+            </div>
+            <div class="audience-preview" id="m-aud-preview"></div>
+          </div>
+        </div>
+      </div>
 
       <div class="divider" style="margin-top:20px;">Tips</div>
       <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;">
@@ -1224,8 +1362,8 @@ const S = {
   duration:'30s', context:'', lastScript:'', lastTitle:'',
   user: null, token: null, profile: null,
   logoutTimer: null,
-  // Anti-repetition memory — stores hooks of previously generated scripts
-  // Keyed by "platform|industry|topic" so memory is scoped per combination
+  // Audience targeting
+  audience: { city:'', age:'', gender:'', interests:'', pain:'' },
   scriptMemory: JSON.parse(localStorage.getItem('rs_memory') || '{}'),
 };
 
@@ -1764,6 +1902,85 @@ function mTab(tab) {
 /* ══════════════════════════════════════
    GENERATE
 ══════════════════════════════════════ */
+/* ══════════════════════════════════════
+   AUDIENCE TARGETING
+══════════════════════════════════════ */
+function toggleAudience(pfx) {
+  const fields = document.getElementById(pfx+'-audience-fields');
+  const btn    = document.getElementById(pfx+'-aud-toggle');
+  if (!fields) return;
+  const isOpen = fields.style.display !== 'none';
+  fields.style.display = isOpen ? 'none' : 'block';
+  if (btn) btn.textContent = isOpen ? '+ Add' : '− Hide';
+}
+
+function setAudChip(pfx, field, value) {
+  // Update state
+  S.audience[field] = value;
+  // Update input if exists
+  const input = document.getElementById(pfx+'-aud-'+field);
+  if (input) input.value = value;
+  // Update chip active states
+  const row = document.querySelectorAll(`[onclick*="setAudChip('${pfx}','${field}'"]`);
+  row.forEach(c => c.classList.toggle('active', c.getAttribute('onclick').includes(`'${value}'`)));
+  updateAudPreview(pfx);
+  // Update mobile step subtitle
+  if (pfx === 'm') {
+    const summary = buildAudSummary();
+    const sel = document.getElementById('m-s7-sel');
+    if (sel && summary) { sel.textContent = summary.slice(0,28)+'…'; document.getElementById('m-s7')?.classList.add('done'); }
+  }
+}
+
+function updateAudPreview(pfx) {
+  // Sync state from inputs
+  ['city','age','interests','pain'].forEach(f => {
+    const el = document.getElementById(pfx+'-aud-'+f);
+    if (el) S.audience[f] = el.value.trim();
+  });
+  const summary = buildAudSummary();
+  const preview = document.getElementById(pfx+'-aud-preview');
+  if (preview) {
+    if (summary) {
+      preview.textContent = '🎯 Script will be written for: ' + summary;
+      preview.classList.add('show');
+    } else {
+      preview.classList.remove('show');
+    }
+  }
+  // Update mobile step
+  if (pfx === 'm') {
+    const sel = document.getElementById('m-s7-sel');
+    if (sel) {
+      if (summary) { sel.textContent = summary.slice(0,28)+'…'; document.getElementById('m-s7')?.classList.add('done'); }
+      else { sel.textContent = '—'; document.getElementById('m-s7')?.classList.remove('done'); }
+    }
+  }
+}
+
+function buildAudSummary() {
+  const a = S.audience;
+  const parts = [];
+  if (a.city)      parts.push(a.city);
+  if (a.age)       parts.push(a.age + ' year olds');
+  if (a.gender && a.gender !== 'Everyone') parts.push(a.gender.toLowerCase());
+  if (a.interests) parts.push('interested in ' + a.interests);
+  if (a.pain)      parts.push('dealing with: ' + a.pain);
+  return parts.join(' · ');
+}
+
+function buildAudiencePrompt() {
+  const a = S.audience;
+  const parts = [];
+  if (a.city)      parts.push(`Location: ${a.city}`);
+  if (a.age)       parts.push(`Age: ${a.age}`);
+  if (a.gender)    parts.push(`Gender: ${a.gender}`);
+  if (a.interests) parts.push(`Interests: ${a.interests}`);
+  if (a.pain)      parts.push(`Pain points: ${a.pain}`);
+  if (!parts.length) return '';
+  return `\n\nTARGET AUDIENCE PROFILE:\n${parts.join('\n')}\n\nWrite the script specifically for this audience. Use language, references, examples and cultural context that resonates with people in ${a.city || 'this location'}. Address their specific pain points and interests directly. Make it feel like it was made exactly for them.`;
+}
+
 async function generate() {
   const isMobile = window.innerWidth < 800;
   if (!isMobile) {
@@ -1792,6 +2009,7 @@ async function generate() {
   const previousHooks = getPreviousHooks(memoryKey);
 
   const langInstruction = LANGS[LANG]?.ui?.scriptLang || 'Write the script in English.';
+  const audiencePrompt  = buildAudiencePrompt();
 
   const sys = `You are an expert video script writer for short-form content. You write high-converting scripts for ${plat.name} across any industry.
 
@@ -1807,7 +2025,7 @@ Format every script with EXACTLY these headers:
 
 Write specifically for ${S.industry}. Real scenarios, real pain points. Never generic.
 
-LANGUAGE INSTRUCTION: ${langInstruction}
+LANGUAGE INSTRUCTION: ${langInstruction}${audiencePrompt}
 
 STRICT NO-REPETITION RULE: Every script you generate must be completely unique. Never reuse the same hook opening, story angle, structure, or phrasing from any previous script. If this is a regeneration, approach the topic from a completely fresh angle — different hook type, different scene structure, different CTA style.${previousHooks}`;
 
