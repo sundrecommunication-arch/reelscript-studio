@@ -86,101 +86,91 @@ function sanitiseShort(str) { return sanitise(str, 200); }
 /* ════════════════════════════════
    IN-MEMORY STORES
 ════════════════════════════════ */
-// OTP store: phone → { code, expires, attempts }
+// OTP store: kept for compatibility
 const otpStore = new Map();
+// User accounts: email → { email, salt, password, plan, used, ... }
+const userStore = new Map();
 // Anonymous usage: fingerprint → count
 const anonMap  = new Map();
-// User sessions: token → { phone, plan, used, limit, industry, platform, tone }
+// User sessions: token → { email, plan, used, ... }
 const sessions = new Map();
 
 const ANON_LIMIT  = 3;
 const FREE_LIMIT  = 10;
 const SESSION_TTL = 30 * 60 * 1000; // 30 min auto-logout
 
-/* ════════════════════════════════
-   TERMII — SEND OTP
-════════════════════════════════ */
-app.post('/api/auth/send-otp', rateLimit(5, 60000), async (req, res) => {
-  const phone = sanitiseShort(req.body.phone || '');
-  if (!phone) return res.status(400).json({ error: 'Phone number required.' });
-
-  // Normalise: 08012345678 → +2348012345678
-  let normalised = phone.trim();
-  if (normalised.startsWith('0')) normalised = '+234' + normalised.slice(1);
-  if (!normalised.startsWith('+')) normalised = '+' + normalised;
-
-  // Generate 6-digit code
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  otpStore.set(normalised, { code, expires: Date.now() + 5 * 60 * 1000, attempts: 0 });
-
-  // Send via Termii
-  if (!TERMII_API_KEY) {
-    // Dev mode: return code directly
-    console.log(`DEV OTP for ${normalised}: ${code}`);
-    return res.json({ success: true, dev: true, code, message: 'Dev mode: code returned directly.' });
+// Simple password hash (no bcrypt needed — no extra packages)
+function hashPassword(password, salt) {
+  const str = salt + password + 'reelscript_2026';
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
   }
+  return Math.abs(hash).toString(36) + salt.slice(0, 4);
+}
 
-  try {
-    const resp = await fetch('https://api.ng.termii.com/api/sms/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: normalised,
-        from: TERMII_SENDER_ID,
-        sms: `Your ReelScript verification code is: ${code}. Valid for 5 minutes. Do not share.`,
-        type: 'plain',
-        api_key: TERMII_API_KEY,
-        channel: 'dnd',
-      }),
-    });
-    const data = await resp.json();
-    if (data.code === 'ok' || resp.ok) {
-      res.json({ success: true, phone: normalised });
-    } else {
-      console.error('Termii error:', data);
-      res.status(400).json({ error: data.message || 'Failed to send SMS. Try again.' });
-    }
-  } catch (err) {
-    console.error('Termii fetch error:', err);
-    res.status(500).json({ error: 'SMS service unavailable. Try again shortly.' });
-  }
-});
+function makeToken() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
 
 /* ════════════════════════════════
-   VERIFY OTP
+   EMAIL SIGN UP
 ════════════════════════════════ */
-app.post('/api/auth/verify-otp', rateLimit(10, 60000), (req, res) => {
-  let phone = sanitiseShort(req.body.phone || '');
-  const code  = sanitiseShort(req.body.code  || '');
+app.post('/api/auth/signup', rateLimit(5, 60000), (req, res) => {
+  const email    = sanitiseShort(req.body.email    || '').toLowerCase();
+  const password = sanitise(req.body.password || '', 100);
 
-  if (phone.startsWith('0')) phone = '+234' + phone.slice(1);
-  if (!phone.startsWith('+')) phone = '+' + phone;
+  if (!email || !email.includes('@')) return res.status(400).json({ error: 'Please enter a valid email address.' });
+  if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+  if (userStore.has(email)) return res.status(400).json({ error: 'An account with this email already exists. Please sign in.' });
 
-  const record = otpStore.get(phone);
-  if (!record) return res.status(400).json({ error: 'No OTP found for this number. Request a new code.' });
-  if (Date.now() > record.expires) { otpStore.delete(phone); return res.status(400).json({ error: 'Code expired. Request a new one.' }); }
-  record.attempts++;
-  if (record.attempts > 5) { otpStore.delete(phone); return res.status(400).json({ error: 'Too many attempts. Request a new code.' }); }
-  if (record.code !== code) return res.status(400).json({ error: 'Incorrect code. Please try again.' });
+  const salt  = Math.random().toString(36).slice(2);
+  const hashed = hashPassword(password, salt);
 
-  // Success — create session
-  otpStore.delete(phone);
-  const token = Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
-  sessions.set(token, {
-    phone,
-    plan: 'free',
-    used: 0,
-    limit: FREE_LIMIT,
-    industry: '',
-    platform: 'instagram',
-    tone: 'bold_educative',
+  userStore.set(email, {
+    email, salt, password: hashed,
+    plan: 'free', used: 0,
+    industry: '', platform: 'instagram', tone: 'bold_educative',
     createdAt: Date.now(),
   });
 
-  // Auto-expire session
+  const token = makeToken();
+  sessions.set(token, { email, plan: 'free', used: 0, industry: '', platform: 'instagram', tone: 'bold_educative', createdAt: Date.now() });
   setTimeout(() => sessions.delete(token), SESSION_TTL);
 
-  res.json({ success: true, token, phone });
+  res.json({ success: true, token, email });
+});
+
+/* ════════════════════════════════
+   EMAIL SIGN IN
+════════════════════════════════ */
+app.post('/api/auth/signin', rateLimit(10, 60000), (req, res) => {
+  const email    = sanitiseShort(req.body.email    || '').toLowerCase();
+  const password = sanitise(req.body.password || '', 100);
+
+  if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
+
+  const user = userStore.get(email);
+  if (!user) return res.status(401).json({ error: 'No account found with this email. Please sign up first.' });
+
+  const hashed = hashPassword(password, user.salt);
+  if (hashed !== user.password) return res.status(401).json({ error: 'Incorrect password. Please try again.' });
+
+  const token = makeToken();
+  sessions.set(token, {
+    email: user.email,
+    plan: user.plan,
+    used: user.used,
+    industry: user.industry,
+    platform: user.platform,
+    tone: user.tone,
+    createdAt: Date.now(),
+  });
+  setTimeout(() => sessions.delete(token), SESSION_TTL);
+
+  res.json({ success: true, token, email: user.email });
 });
 
 /* ════════════════════════════════
@@ -191,7 +181,7 @@ app.get('/api/profile', (req, res) => {
   const user  = token ? sessions.get(token) : null;
   if (!user) return res.status(401).json({ error: 'Not authenticated.' });
   res.json({
-    phone: user.phone,
+    email: user.email,
     plan: user.plan,
     scripts_used_this_month: user.used,
     scripts_limit: user.plan === 'paid' ? 999999 : FREE_LIMIT,

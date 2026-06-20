@@ -148,7 +148,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .ind-input{width:100%;border:1.5px solid var(--border);border-radius:var(--r);padding:11px 14px;font-size:0.88rem;background:var(--paper);color:var(--ink);transition:border-color .15s;}
 .ind-input:focus{outline:none;border-color:var(--accent);}
 .ind-input::placeholder{color:#AAA;}
-.ind-suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:200;display:none;overflow:hidden;max-height:260px;overflow-y:auto;}
+.ind-suggestions{position:fixed;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,0.18);z-index:9999;display:none;overflow:hidden;max-height:260px;overflow-y:auto;width:calc(100% - 28px);max-width:460px;}
 .ind-suggestions.open{display:block;}
 .ind-item{padding:13px 14px;font-size:0.88rem;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;line-height:1.3;}
 .ind-item:last-child{border-bottom:none;}
@@ -261,9 +261,8 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .m-panel-sub{font-size:0.8rem;color:var(--muted);margin-bottom:18px;line-height:1.5;}
 
 .step-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);margin-bottom:10px;overflow:hidden;transition:border-color .2s;}
-#m-s2{overflow:visible;}
-#m-s2 .step-body{overflow:visible;}
-#m-s2 .step-body-in{overflow:visible;}
+/* Industry suggestions rendered as fixed overlay - no overflow needed */
+#m-s2{overflow:hidden;}
 .step-card.open{border-color:var(--accent);}
 .step-hdr{display:flex;align-items:center;gap:11px;padding:14px;cursor:pointer;user-select:none;-webkit-user-select:none;}
 .step-num{width:24px;height:24px;background:var(--ink);color:#fff;border-radius:50%;display:grid;place-items:center;font-size:0.68rem;font-weight:700;flex-shrink:0;transition:background .2s;}
@@ -276,8 +275,8 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .step-chev{color:var(--muted);font-size:0.8rem;transition:transform .25s;flex-shrink:0;}
 .step-card.open .step-chev{transform:rotate(180deg);}
 .step-body{max-height:0;overflow:hidden;transition:max-height .32s ease;}
-.step-card.open .step-body{max-height:700px;overflow:visible;}
-.step-body-in{padding:0 14px 16px;overflow:visible;}
+.step-card.open .step-body{max-height:700px;overflow:hidden;}
+.step-body-in{padding:0 14px 16px;}
 
 .m-gen-bar{position:fixed;bottom:calc(var(--tab-h) + var(--safe-b));left:0;right:0;padding:10px 15px;background:linear-gradient(to top,var(--paper) 65%,transparent);z-index:100;}
 .tabbar{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tab-h) + var(--safe-b));background:var(--card);border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-b);z-index:200;}
@@ -486,53 +485,53 @@ textarea,input{font-family:'DM Sans',sans-serif;}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-head"><h3 id="auth-modal-title">Sign In</h3><span class="modal-close" onclick="closeModal('auth-modal')">✕</span></div>
     <div class="modal-body">
+      <div class="modal-error" id="auth-error"></div>
 
-      <!-- Step 1: Phone -->
-      <div id="auth-step-phone">
-        <div class="modal-error" id="auth-error"></div>
+      <!-- Sign In form -->
+      <div id="auth-form-signin">
         <div style="text-align:center;padding:4px 0 14px;">
-          <div style="font-size:2.2rem;margin-bottom:8px;">📱</div>
-          <p style="font-size:0.86rem;color:var(--muted);line-height:1.55;">Enter your Nigerian phone number to get a free verification code by SMS.</p>
+          <div style="font-size:2rem;margin-bottom:6px;">✉️</div>
+          <p style="font-size:0.85rem;color:var(--muted);line-height:1.5;">Sign in to save your scripts and unlock 10 free scripts per month.</p>
         </div>
         <div>
-          <div class="modal-label">Phone Number</div>
-          <input type="tel" class="modal-input" id="auth-phone"
-            placeholder="08012345678 or +2348012345678"
-            style="font-size:1rem;padding:14px;"/>
-          <p style="font-size:0.74rem;color:var(--muted);margin-top:6px;line-height:1.45;">
-            ✓ Works with <strong>081...</strong> or <strong>+2348...</strong> format
-          </p>
+          <div class="modal-label">Email Address</div>
+          <input type="email" class="modal-input" id="auth-email" placeholder="you@example.com" style="font-size:1rem;padding:13px;" inputmode="email"/>
         </div>
-        <button class="modal-btn" id="auth-send-btn" onclick="sendOTP()" style="padding:15px;font-size:1rem;">
-          📨 Send Verification Code
+        <div>
+          <div class="modal-label" style="margin-top:12px;">Password</div>
+          <input type="password" class="modal-input" id="auth-password" placeholder="Your password" style="font-size:1rem;padding:13px;"/>
+        </div>
+        <button class="modal-btn" id="auth-signin-btn" onclick="doSignIn()" style="padding:14px;margin-top:8px;">
+          Sign In
+        </button>
+        <button class="modal-btn secondary" onclick="switchToSignUp()" style="margin-top:6px;">
+          No account? Create one free →
+        </button>
+      </div>
+
+      <!-- Sign Up form -->
+      <div id="auth-form-signup" style="display:none;">
+        <div style="text-align:center;padding:4px 0 14px;">
+          <div style="font-size:2rem;margin-bottom:6px;">🎬</div>
+          <p style="font-size:0.85rem;color:var(--muted);line-height:1.5;">Create your free account and get 10 scripts per month.</p>
+        </div>
+        <div>
+          <div class="modal-label">Email Address</div>
+          <input type="email" class="modal-input" id="signup-email" placeholder="you@example.com" style="font-size:1rem;padding:13px;" inputmode="email"/>
+        </div>
+        <div>
+          <div class="modal-label" style="margin-top:12px;">Choose a Password</div>
+          <input type="password" class="modal-input" id="signup-password" placeholder="At least 6 characters" style="font-size:1rem;padding:13px;"/>
+        </div>
+        <button class="modal-btn" id="auth-signup-btn" onclick="doSignUp()" style="padding:14px;margin-top:8px;">
+          Create Free Account
+        </button>
+        <button class="modal-btn secondary" onclick="switchToSignIn()" style="margin-top:6px;">
+          ← Already have an account
         </button>
         <p style="text-align:center;font-size:0.72rem;color:var(--muted);margin-top:10px;line-height:1.5;">
           🔒 Your data is encrypted and never shared.
         </p>
-      </div>
-
-      <!-- Step 2: OTP -->
-      <div id="auth-step-otp" style="display:none;">
-        <div class="modal-error" id="otp-error"></div>
-        <div style="text-align:center;padding:4px 0 16px;">
-          <div style="font-size:2.2rem;margin-bottom:8px;">💬</div>
-          <p style="font-size:0.86rem;color:var(--muted);line-height:1.55;">
-            Code sent to<br/>
-            <strong style="color:var(--ink);font-size:1rem;" id="auth-phone-display"></strong>
-          </p>
-        </div>
-        <div>
-          <div class="modal-label">Enter 6-digit Code</div>
-          <input type="number" class="modal-input" id="auth-otp"
-            placeholder="123456"
-            maxlength="6"
-            inputmode="numeric"
-            style="font-size:1.8rem;text-align:center;letter-spacing:0.15em;padding:16px;"/>
-        </div>
-        <button class="modal-btn" id="auth-verify-btn" onclick="verifyOTP()" style="padding:15px;font-size:1rem;margin-top:8px;">
-          ✅ Verify & Sign In
-        </button>
-        <button class="modal-btn secondary" onclick="backToPhone()" style="margin-top:6px;">← Change number</button>
       </div>
 
     </div>
@@ -955,71 +954,86 @@ async function sbFetch(path, opts={}) {
   return res.json();
 }
 
-async function sendOTP() {
-  const phone = document.getElementById('auth-phone').value.trim();
-  if (!phone) { showAuthError('Please enter your phone number.'); return; }
+/* ══════════════════════════════════════
+   EMAIL AUTH
+══════════════════════════════════════ */
+function switchToSignUp() {
+  document.getElementById('auth-form-signin').style.display = 'none';
+  document.getElementById('auth-form-signup').style.display = 'block';
+  document.getElementById('auth-modal-title').textContent = 'Create Account';
+  document.getElementById('auth-error').classList.remove('show');
+}
+function switchToSignIn() {
+  document.getElementById('auth-form-signup').style.display = 'none';
+  document.getElementById('auth-form-signin').style.display = 'block';
+  document.getElementById('auth-modal-title').textContent = 'Sign In';
+  document.getElementById('auth-error').classList.remove('show');
+}
 
-  const btn = document.getElementById('auth-send-btn');
-  btn.disabled = true; btn.textContent = t('sending') || 'Sending…';
+async function doSignIn() {
+  const email    = (document.getElementById('auth-email')?.value || '').trim();
+  const password = (document.getElementById('auth-password')?.value || '').trim();
+  if (!email || !password) { showAuthError('Please enter your email and password.'); return; }
+
+  const btn = document.getElementById('auth-signin-btn');
+  btn.disabled = true; btn.textContent = 'Signing in…';
 
   try {
-    const res = await fetch('/api/auth/send-otp', {
+    const res = await fetch('/api/auth/signin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone })
+      body: JSON.stringify({ email, password })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to send code');
-
-    document.getElementById('auth-step-phone').style.display = 'none';
-    document.getElementById('auth-step-otp').style.display = 'block';
-    document.getElementById('auth-phone-display').textContent = phone;
-    document.getElementById('auth-modal-title').textContent = 'Enter Code';
-    if (data.dev) showToast('📱 Dev mode: check server console for OTP');
+    if (!res.ok) throw new Error(data.error || 'Sign in failed');
+    S.token = data.token;
+    S.user  = { email: data.email };
+    closeModal('auth-modal');
+    await loadProfile();
+    showToast('✅ Signed in!');
+    resetAutoLogout();
   } catch(err) {
     showAuthError(err.message);
   }
-  btn.disabled = false; btn.textContent = t('sendCode') || 'Send Verification Code';
+  btn.disabled = false; btn.textContent = 'Sign In';
 }
 
-async function verifyOTP() {
-  const phone = document.getElementById('auth-phone').value.trim();
-  const code  = document.getElementById('auth-otp').value.trim();
-  if (!code) { showAuthError2('Please enter the code.'); return; }
+async function doSignUp() {
+  const email    = (document.getElementById('signup-email')?.value || '').trim();
+  const password = (document.getElementById('signup-password')?.value || '').trim();
+  if (!email)         { showAuthError('Please enter your email.'); return; }
+  if (!password || password.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
 
-  const btn = document.getElementById('auth-verify-btn');
-  btn.disabled = true; btn.textContent = t('verifying') || 'Verifying…';
+  const btn = document.getElementById('auth-signup-btn');
+  btn.disabled = true; btn.textContent = 'Creating account…';
 
   try {
-    const res = await fetch('/api/auth/verify-otp', {
+    const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, code })
+      body: JSON.stringify({ email, password })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Invalid code');
-
-    // New server returns { token, phone }
+    if (!res.ok) throw new Error(data.error || 'Sign up failed');
     S.token = data.token;
-    S.user  = { phone: data.phone };
+    S.user  = { email: data.email };
     closeModal('auth-modal');
     await loadProfile();
-    showToast('✅ Signed in successfully!');
+    showToast('🎉 Account created! Welcome to ReelScript.');
     resetAutoLogout();
   } catch(err) {
-    showAuthError2(err.message);
+    showAuthError(err.message);
   }
-  btn.disabled = false; btn.textContent = t('verify') || 'Verify & Sign In';
+  btn.disabled = false; btn.textContent = 'Create Free Account';
 }
 
-function backToPhone() {
-  document.getElementById('auth-step-otp').style.display = 'none';
-  document.getElementById('auth-step-phone').style.display = 'block';
-  document.getElementById('auth-modal-title').textContent = 'Sign In';
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  if (el) { el.textContent = msg; el.classList.add('show'); }
 }
 
-function showAuthError(msg)  { const el=document.getElementById('auth-error');  el.textContent=msg; el.classList.add('show'); }
-function showAuthError2(msg) { const el=document.getElementById('otp-error');   el.textContent=msg; el.classList.add('show'); }
+function backToPhone() {}  // kept for compatibility
+
 
 async function loadProfile() {
   if (!S.token) return;
@@ -1051,12 +1065,12 @@ function applyPreferences() {
 function updateNavAuth() {
   const area = document.getElementById('nav-auth-area');
   if (S.user) {
-    const phone = S.user.phone || 'User';
+    const display = S.user.email ? S.user.email.split('@')[0] : 'User';
     area.innerHTML = `
-      <button class="nav-auth-btn" onclick="openUpgrade()" style="margin-right:6px;">⭐ Upgrade</button>
-      <button class="nav-auth-btn" onclick="signOut()">Sign out</button>`;
+      <button class="nav-auth-btn" onclick="openUpgrade()" style="margin-right:6px;">⭐ Pro</button>
+      <button class="nav-auth-btn" onclick="signOut()" title="Sign out ${S.user.email||''}">👤 ${display}</button>`;
   } else {
-    area.innerHTML = `<button class="nav-auth-btn" onclick="openAuth('login')">Sign in</button>`;
+    area.innerHTML = `<button class="nav-auth-btn" onclick="openAuth('login')" data-t="signin">Sign in</button>`;
   }
 }
 
@@ -1177,16 +1191,19 @@ function onIndFocus(pfx) {
   showIndSuggestions(pfx, val);
 }
 function onIndBlur(pfx) {
-  // Longer delay on mobile to allow touch events to fire on suggestions
-  setTimeout(() => document.getElementById(pfx+'-industry-sugg').classList.remove('open'), 300);
+  setTimeout(() => {
+    const box = document.getElementById(pfx+'-industry-sugg');
+    box.classList.remove('open');
+    box.style.display = 'none';
+  }, 300);
 }
 function showIndSuggestions(pfx, val) {
-  const box = document.getElementById(pfx+'-industry-sugg');
-  if (!val || !val.trim()) { box.classList.remove('open'); return; }
+  const box   = document.getElementById(pfx+'-industry-sugg');
+  const input = document.getElementById(pfx+'-industry');
+  if (!val || !val.trim()) { box.classList.remove('open'); box.style.display='none'; return; }
   const re = new RegExp(val.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi');
   const matches = INDUSTRIES.filter(s => s.toLowerCase().includes(val.toLowerCase())).slice(0, 8);
-  if (!matches.length) { box.classList.remove('open'); return; }
-  // Use both ontouchstart and onclick for mobile + desktop
+  if (!matches.length) { box.classList.remove('open'); box.style.display='none'; return; }
   box.innerHTML = matches.map(m =>
     `<div class="ind-item"
       ontouchstart="pickInd('${pfx}','${m.replace(/'/g,"\\'")}');event.preventDefault();"
@@ -1194,6 +1211,12 @@ function showIndSuggestions(pfx, val) {
       ${m.replace(re,'<em>$&</em>')}
     </div>`
   ).join('');
+  // Position the dropdown using fixed coords from input element
+  const rect = input.getBoundingClientRect();
+  box.style.top    = (rect.bottom + 4) + 'px';
+  box.style.left   = rect.left + 'px';
+  box.style.width  = rect.width + 'px';
+  box.style.display = 'block';
   box.classList.add('open');
 }
 function pickInd(pfx, val) {
