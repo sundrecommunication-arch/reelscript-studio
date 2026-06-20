@@ -600,7 +600,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
         <div class="audience-grid">
           <div class="audience-field full">
             <div class="audience-label">📍 City / Location</div>
-            <input class="audience-input" id="d-aud-city" placeholder="e.g. Lagos, Accra, Nairobi, Cairo…" autocomplete="off"/>
+            <input class="audience-input" id="d-aud-city" placeholder="e.g. Lagos, Accra, Nairobi, Cairo…" autocomplete="off" oninput="syncAud('d')"/>
             <div class="audience-chips-row">
               <span class="aud-chip" onclick="setAudChip('d','city','Lagos, Nigeria')">Lagos</span>
               <span class="aud-chip" onclick="setAudChip('d','city','Abuja, Nigeria')">Abuja</span>
@@ -619,7 +619,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
               <span class="aud-chip" onclick="setAudChip('d','age','35-44')">35-44</span>
               <span class="aud-chip" onclick="setAudChip('d','age','45+')">45+</span>
             </div>
-            <input class="audience-input" id="d-aud-age" placeholder="or type age…" autocomplete="off" style="margin-top:5px;"/>
+            <input class="audience-input" id="d-aud-age" placeholder="or type age…" autocomplete="off" style="margin-top:5px;" oninput="syncAud('d')"/>
           </div>
           <div class="audience-field">
             <div class="audience-label">👤 Gender</div>
@@ -631,11 +631,11 @@ textarea,input{font-family:'DM Sans',sans-serif;}
           </div>
           <div class="audience-field full">
             <div class="audience-label">💡 Interests</div>
-            <input class="audience-input" id="d-aud-interests" placeholder="e.g. fashion, fitness, entrepreneurship, beauty…" autocomplete="off"/>
+            <input class="audience-input" id="d-aud-interests" placeholder="e.g. fashion, fitness, entrepreneurship, beauty…" autocomplete="off" oninput="syncAud('d')"/>
           </div>
           <div class="audience-field full">
             <div class="audience-label">😣 Pain Points</div>
-            <input class="audience-input" id="d-aud-pain" placeholder="e.g. struggling to grow hair, no time to cook, can't afford quality…" autocomplete="off"/>
+            <input class="audience-input" id="d-aud-pain" placeholder="e.g. struggling to grow hair, no time to cook, can't afford quality…" autocomplete="off" oninput="syncAud('d')"/>
           </div>
         </div>
         <div class="audience-preview" id="d-aud-preview"></div>
@@ -1562,7 +1562,7 @@ function updateNavAuth() {
               <div class="user-dropdown-email">${email}</div>
               <div class="user-dropdown-plan pro">⭐ Pro Account — Unlimited</div>
             </div>
-            <div class="user-dropdown-item" onclick="mTab('library');closeUserMenu();">📚 My Scripts</div>
+            <div class="user-dropdown-item" onclick="openLibrary();closeUserMenu();">📚 My Scripts</div>
             <div class="user-dropdown-item danger" onclick="signOut();">🚪 Sign Out</div>
           </div>
         </div>`;
@@ -1580,7 +1580,7 @@ function updateNavAuth() {
               <div class="user-dropdown-plan free">Free Plan — ${S.profile?.scripts_used_this_month||0}/10 scripts</div>
             </div>
             <div class="user-dropdown-item" onclick="openUpgrade();closeUserMenu();">⭐ Upgrade to Pro</div>
-            <div class="user-dropdown-item" onclick="mTab('library');closeUserMenu();">📚 My Scripts</div>
+            <div class="user-dropdown-item" onclick="openLibrary();closeUserMenu();">📚 My Scripts</div>
             <div class="user-dropdown-item danger" onclick="signOut();">🚪 Sign Out</div>
           </div>
         </div>`;
@@ -1593,6 +1593,17 @@ function updateNavAuth() {
 // Pro badge click — show a quick info toast
 function showProInfo() {
   showToast('⭐ You are on Pro — unlimited scripts, all platforms & languages!');
+}
+
+function openLibrary() {
+  const isMobile = window.innerWidth < 800;
+  if (isMobile) {
+    mTab('library');
+  } else {
+    // On desktop scroll to library section or show in output area
+    loadLibrary();
+    showToast('📚 Library loaded — scroll down to see your scripts');
+  }
 }
 
 function toggleUserMenu(e) {
@@ -1734,8 +1745,8 @@ function resetAutoLogout() {
     showToast('⏰ You were signed out after 30 minutes of inactivity.');
   }, 30 * 60 * 1000);
 }
-document.addEventListener('click', resetAutoLogout);
-document.addEventListener('keydown', resetAutoLogout);
+document.addEventListener('click', () => { if(S.user) resetAutoLogout(); });
+document.addEventListener('keydown', () => { if(S.user) resetAutoLogout(); });
 
 /* ══════════════════════════════════════
    BOOT
@@ -1763,6 +1774,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Sync text inputs
   ['d-topic','m-topic'].forEach(id => document.getElementById(id)?.addEventListener('input', e => { S.topic=e.target.value; }));
   ['d-context','m-context'].forEach(id => document.getElementById(id)?.addEventListener('input', e => { S.context=e.target.value; }));
+
+  // Mark tone and duration steps as done by default (they have default values)
+  document.getElementById('m-s4')?.classList.add('done');
+  document.getElementById('m-s5')?.classList.add('done');
 
   document.getElementById('m-topic')?.addEventListener('blur', () => {
     if (S.topic.trim()) { document.getElementById('m-s3-sel').textContent=S.topic.slice(0,28)+(S.topic.length>28?'…':''); document.getElementById('m-s3').classList.add('done'); }
@@ -1944,6 +1959,16 @@ function mTab(tab) {
 /* ══════════════════════════════════════
    AUDIENCE TARGETING
 ══════════════════════════════════════ */
+function syncAud(pfx) {
+  // Sync all audience input fields to S.audience state
+  const fields = { city:'city', age:'age', interests:'interests', pain:'pain' };
+  Object.entries(fields).forEach(([key, id]) => {
+    const el = document.getElementById(pfx+'-aud-'+id);
+    if (el) S.audience[key] = el.value.trim();
+  });
+  updateAudPreview(pfx);
+}
+
 function toggleAudience(pfx) {
   const fields = document.getElementById(pfx+'-audience-fields');
   const btn    = document.getElementById(pfx+'-aud-toggle');
@@ -2026,10 +2051,14 @@ async function generate() {
     S.industry = document.getElementById('d-industry').value.trim();
     S.topic    = document.getElementById('d-topic').value.trim();
     S.context  = document.getElementById('d-context').value.trim();
+    // Sync desktop audience fields
+    syncAud('d');
   } else {
     S.industry = document.getElementById('m-industry').value.trim();
     S.topic    = document.getElementById('m-topic').value.trim();
     S.context  = document.getElementById('m-context').value.trim();
+    // Sync mobile audience fields
+    syncAud('m');
   }
   if (!S.industry) { showToast('👆 Please enter your industry'); return; }
   if (!S.topic)    { showToast('👆 Please describe your topic'); return; }

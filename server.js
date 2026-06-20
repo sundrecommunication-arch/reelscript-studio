@@ -223,11 +223,28 @@ app.post('/api/auth/signin', rateLimit(10, 60000), async (req, res) => {
       user.subscription_expires &&
       new Date(user.subscription_expires) > new Date();
 
+    // Reset monthly usage if it's a new month
+    const now       = new Date();
+    const lastReset = user.last_reset ? new Date(user.last_reset) : null;
+    const isNewMonth = !lastReset ||
+      lastReset.getMonth() !== now.getMonth() ||
+      lastReset.getFullYear() !== now.getFullYear();
+
+    let scriptsUsed = user.scripts_used || 0;
+    if (isNewMonth && !isPaid) {
+      scriptsUsed = 0;
+      // Reset in Supabase
+      sb('PATCH', 'rs_users', {
+        filter: `email=eq.${encodeURIComponent(user.email)}`,
+        body: { scripts_used: 0, last_reset: now.toISOString() }
+      }).catch(e => console.error('Reset failed:', e.message));
+    }
+
     const token = makeToken();
     sessions.set(token, {
       email:    user.email,
       plan:     isPaid ? 'paid' : 'free',
-      used:     user.scripts_used || 0,
+      used:     scriptsUsed,
       platform: user.preferred_platform || 'instagram',
       tone:     user.preferred_tone     || 'bold_educative',
       industry: (user.preferred_industry && !user.preferred_industry.includes('@')) ? user.preferred_industry : '',
