@@ -45,8 +45,8 @@ app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' https://js.paystack.co",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://js.paystack.co https://checkout.paystack.com https://paystack.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://js.paystack.co https://checkout.paystack.com https://paystack.com https://www.gstatic.com",
+    "font-src 'self' https://fonts.gstatic.com https://www.gstatic.com",
     "img-src 'self' data: https:",
     "connect-src 'self' https://api.anthropic.com https://*.supabase.co https://api.paystack.co https://api.ng.termii.com",
     "frame-src 'self' https://js.paystack.co https://checkout.paystack.com",

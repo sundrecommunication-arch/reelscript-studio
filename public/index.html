@@ -332,6 +332,36 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 @media(max-width:799px){.toast{bottom:calc(var(--tab-h) + var(--safe-b) + 78px);}}
 @media(min-width:800px){.desktop-wrap{display:grid;}.mobile-shell{display:none!important;}}
+
+/* ── MOBILE NAV TIGHTENING ── */
+@media(max-width:799px){
+  .nav{padding:0 12px;}
+  .logo{font-size:0.88rem;gap:6px;}
+  .logo-mark{width:26px;height:26px;font-size:0.65rem;border-radius:6px;}
+  .usage-pill{display:none!important;}
+  .lang-btn{padding:5px 8px;font-size:0.68rem;}
+  .lang-btn .lang-arrow{display:none;}
+  .nav-auth-btn{padding:5px 10px;font-size:0.68rem;}
+}
+
+/* ── MOBILE USAGE STRIP ── */
+.m-usage-strip{
+  display:none;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:10px 14px;
+  margin-bottom:12px;
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+}
+@media(max-width:799px){.m-usage-strip{display:flex;}}
+.m-usage-count{font-size:0.82rem;font-weight:600;color:var(--ink);}
+.m-usage-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:3px;margin:0 12px;}
+.m-usage-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .3s;}
+.m-usage-label{font-size:0.72rem;color:var(--muted);white-space:nowrap;}
+
 </style>
 </head>
 <body>
@@ -425,6 +455,13 @@ textarea,input{font-family:'DM Sans',sans-serif;}
     <div class="m-panel active" id="m-panel-build">
       <h1 class="m-panel-title" id="m-build-title">Build your<br/><em>Script</em></h1>
       <p class="m-panel-sub" id="m-build-sub">Fill the steps, then Generate.</p>
+
+      <!-- Mobile usage strip -->
+      <div class="m-usage-strip" id="m-usage-strip" style="display:none;">
+        <span class="m-usage-count"><span id="m-used">0</span>/<span id="m-limit">10</span></span>
+        <div class="m-usage-bar-wrap"><div class="m-usage-bar" id="m-usage-bar" style="width:0%"></div></div>
+        <span class="m-usage-label">scripts used</span>
+      </div>
 
       <div class="upgrade-banner" id="m-upgrade-banner" style="display:none;margin-bottom:14px;">
         <div><h3>🚀 Upgrade to Pro</h3><p>Get unlimited scripts for ₦15,000/month.</p></div>
@@ -1076,18 +1113,39 @@ function updateNavAuth() {
 
 function updateUsagePill() {
   const pill = document.getElementById('usage-pill');
-  if (!S.profile) { pill.style.display='none'; return; }
+  if (!S.profile) { if(pill) pill.style.display='none'; return; }
   const used  = S.profile.scripts_used_this_month || 0;
   const limit = S.profile.plan === 'paid' ? '∞' : (S.profile.scripts_limit || 10);
-  pill.style.display = 'flex';
-  document.getElementById('usage-used').textContent  = used;
-  document.getElementById('usage-limit').textContent = limit;
-  pill.className = 'usage-pill' + (limit!=='∞' && used >= limit ? ' full' : used >= limit*0.8 ? ' warning' : '');
+  const limitNum = S.profile.plan === 'paid' ? 999 : (S.profile.scripts_limit || 10);
 
-  // Show upgrade banners
-  const showBanner = S.profile.plan !== 'paid' && used >= limit;
-  document.getElementById('d-upgrade-banner').style.display = showBanner ? 'flex' : 'none';
-  document.getElementById('m-upgrade-banner').style.display = showBanner ? 'flex' : 'none';
+  // Desktop pill
+  if (pill) {
+    pill.style.display = 'flex';
+    document.getElementById('usage-used').textContent  = used;
+    document.getElementById('usage-limit').textContent = limit;
+    pill.className = 'usage-pill' + (limit!=='∞' && used >= limitNum ? ' full' : used >= limitNum*0.8 ? ' warning' : '');
+  }
+
+  // Mobile strip
+  const strip = document.getElementById('m-usage-strip');
+  if (strip) {
+    strip.style.display = 'flex';
+    document.getElementById('m-used').textContent  = used;
+    document.getElementById('m-limit').textContent = limit;
+    const pct = limit === '∞' ? 20 : Math.min(100, Math.round((used/limitNum)*100));
+    const bar = document.getElementById('m-usage-bar');
+    if (bar) {
+      bar.style.width = pct + '%';
+      bar.style.background = used >= limitNum ? '#e53e3e' : used >= limitNum*0.8 ? 'var(--accent)' : 'var(--green)';
+    }
+  }
+
+  // Upgrade banners
+  const showBanner = S.profile.plan !== 'paid' && used >= limitNum;
+  const db = document.getElementById('d-upgrade-banner');
+  const mb = document.getElementById('m-upgrade-banner');
+  if(db) db.style.display = showBanner ? 'flex' : 'none';
+  if(mb) mb.style.display = showBanner ? 'flex' : 'none';
 }
 
 function signOut() {
@@ -1191,19 +1249,27 @@ function onIndFocus(pfx) {
   showIndSuggestions(pfx, val);
 }
 function onIndBlur(pfx) {
-  setTimeout(() => {
-    const box = document.getElementById(pfx+'-industry-sugg');
-    box.classList.remove('open');
-    box.style.display = 'none';
-  }, 300);
+  setTimeout(() => closeGlobalSugg(), 300);
 }
 function showIndSuggestions(pfx, val) {
-  const box   = document.getElementById(pfx+'-industry-sugg');
+  // Use a single body-level dropdown for both desktop and mobile
+  let box = document.getElementById('global-ind-sugg');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'global-ind-sugg';
+    box.className = 'ind-suggestions';
+    box.style.cssText = 'position:fixed;z-index:9999;background:#fff;border:1.5px solid #E2DDD6;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden;max-height:260px;overflow-y:auto;display:none;';
+    document.body.appendChild(box);
+  }
+
   const input = document.getElementById(pfx+'-industry');
-  if (!val || !val.trim()) { box.classList.remove('open'); box.style.display='none'; return; }
+  if (!val || !val.trim()) { box.style.display='none'; box._pfx=null; return; }
+
   const re = new RegExp(val.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi');
   const matches = INDUSTRIES.filter(s => s.toLowerCase().includes(val.toLowerCase())).slice(0, 8);
-  if (!matches.length) { box.classList.remove('open'); box.style.display='none'; return; }
+  if (!matches.length) { box.style.display='none'; return; }
+
+  box._pfx = pfx;
   box.innerHTML = matches.map(m =>
     `<div class="ind-item"
       ontouchstart="pickInd('${pfx}','${m.replace(/'/g,"\\'")}');event.preventDefault();"
@@ -1211,23 +1277,30 @@ function showIndSuggestions(pfx, val) {
       ${m.replace(re,'<em>$&</em>')}
     </div>`
   ).join('');
-  // Position the dropdown using fixed coords from input element
+
+  // Position exactly below the input
   const rect = input.getBoundingClientRect();
-  box.style.top    = (rect.bottom + 4) + 'px';
+  box.style.top    = (rect.bottom + window.scrollY + 4) + 'px';
   box.style.left   = rect.left + 'px';
   box.style.width  = rect.width + 'px';
   box.style.display = 'block';
-  box.classList.add('open');
 }
+
+function closeGlobalSugg() {
+  const box = document.getElementById('global-ind-sugg');
+  if (box) box.style.display = 'none';
+}
+
 function pickInd(pfx, val) {
   document.getElementById(pfx+'-industry').value = val;
   S.industry = val;
-  document.getElementById(pfx+'-industry-sugg').classList.remove('open');
+  closeGlobalSugg();
   if (pfx==='m') {
     document.getElementById('m-s2-sel').textContent = val;
     document.getElementById('m-s2').classList.add('done');
-    // Small delay so touch event completes before advancing
-    setTimeout(() => mStep('m-s3'), 50);
+    setTimeout(() => mStep('m-s3'), 80);
+  } else {
+    document.getElementById('d-industry').value = val;
   }
 }
 
