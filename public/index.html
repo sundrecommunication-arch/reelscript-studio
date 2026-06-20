@@ -1658,11 +1658,60 @@ function updateUsagePill() {
 }
 
 function signOut() {
+  // Clear session state
   S.user = null; S.token = null; S.profile = null;
   S.industry = ''; S.topic = ''; S.context = '';
+  S.lastScript = ''; S.lastTitle = '';
+  S.audience = { city:'', age:'', gender:'', interests:'', pain:'' };
   clearTimeout(S.logoutTimer);
   closeUserMenu();
   updateNavAuth();
+
+  // Reset ALL input fields
+  ['d-industry','m-industry','d-topic','m-topic','d-context','m-context'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['d-aud-city','m-aud-city','d-aud-interests','m-aud-interests','d-aud-pain','m-aud-pain'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+
+  // Reset step subtitles and done states
+  ['m-s2-sel','m-s3-sel','m-s4-sel','m-s5-sel','m-s7-sel'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '—';
+  });
+  ['m-s2','m-s3','m-s4','m-s5','m-s6','m-s7'].forEach(id => {
+    document.getElementById(id)?.classList.remove('done','open');
+  });
+  document.getElementById('m-s1')?.classList.add('open');
+
+  // Reset desktop output to idle
+  const dIdle = document.getElementById('d-idle');
+  const dResult = document.getElementById('d-result');
+  const dFooter = document.getElementById('d-footer');
+  const dFeedback = document.getElementById('d-feedback-bar');
+  const dLoad = document.getElementById('d-loading');
+  if (dIdle)    dIdle.style.display = 'flex';
+  if (dResult)  { dResult.classList.remove('on'); dResult.style.display='none'; dResult.innerHTML=''; }
+  if (dFooter)  dFooter.style.display = 'none';
+  if (dFeedback) dFeedback.classList.remove('show');
+  if (dLoad)    dLoad.classList.remove('on');
+  const dTitle = document.getElementById('d-out-title');
+  if (dTitle)   dTitle.textContent = 'Ready to Generate';
+
+  // Reset mobile to Build tab + idle state
+  mTab('build');
+  const mResult  = document.getElementById('m-result');
+  const mLoad    = document.getElementById('m-loading');
+  const mIdle    = document.getElementById('m-idle');
+  const mFeedback = document.getElementById('m-feedback-bar');
+  if (mResult)   { mResult.classList.remove('on'); mResult.style.display='none'; }
+  if (mLoad)     mLoad.classList.remove('on');
+  if (mIdle)     mIdle.style.display = 'flex';
+  if (mFeedback) mFeedback.classList.remove('show');
+  document.getElementById('m-out-dot')?.classList.remove('show');
+  const scroll = document.getElementById('m-scroll');
+  if (scroll) scroll.scrollTop = 0;
+
   // Clear usage displays
   const pill = document.getElementById('usage-pill');
   if (pill) pill.style.display = 'none';
@@ -1672,17 +1721,7 @@ function signOut() {
   const mb = document.getElementById('m-upgrade-banner');
   if (db) db.style.display = 'none';
   if (mb) mb.style.display = 'none';
-  // Clear industry field
-  ['d-industry','m-industry'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  // Clear step selected labels
-  ['m-s2-sel'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = '—';
-  });
-  document.getElementById('m-s2')?.classList.remove('done');
+
   showToast('👋 Signed out.');
 }
 
