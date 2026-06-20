@@ -80,12 +80,12 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://js.paystack.co https://*.paystack.co",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://*.paystack.co https://paystack.com https://www.gstatic.com",
-    "font-src 'self' https://fonts.gstatic.com https://www.gstatic.com",
+    "script-src 'self' 'unsafe-inline' https://js.paystack.co https://*.paystack.co https://paystack.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://*.paystack.co https://paystack.com https://checkout.paystack.com https://www.gstatic.com",
+    "font-src 'self' https://fonts.gstatic.com https://www.gstatic.com https://*.paystack.co",
     "img-src 'self' data: https:",
-    "connect-src 'self' https://api.anthropic.com https://*.supabase.co https://api.paystack.co https://*.paystack.co https://open.er-api.com",
-    "frame-src 'self' https://*.paystack.co https://paystack.com",
+    "connect-src 'self' https://api.anthropic.com https://*.supabase.co https://api.paystack.co https://*.paystack.co https://paystack.com https://open.er-api.com",
+    "frame-src 'self' https://*.paystack.co https://paystack.com https://checkout.paystack.com https://js.paystack.co",
   ].join('; '));
   next();
 });
