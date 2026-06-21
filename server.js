@@ -2,6 +2,7 @@ import express from 'express';
 import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app  = express();
@@ -29,9 +30,17 @@ const ANTHROPIC_API_KEY  = process.env.ANTHROPIC_API_KEY;
 const SUPABASE_URL       = process.env.SUPABASE_URL;
 const SUPABASE_KEY       = process.env.SUPABASE_SERVICE_KEY;
 const PAYSTACK_SECRET    = process.env.PAYSTACK_SECRET_KEY;
-const PAYSTACK_PLAN_CODE = process.env.PAYSTACK_PLAN_CODE;
+const PAYSTACK_PLAN_CODE = process.env.PAYSTACK_PLAN_CODE;        // legacy monthly (fallback)
+const PLAN_MONTHLY       = process.env.PAYSTACK_PLAN_MONTHLY || PAYSTACK_PLAN_CODE || '';
+const PLAN_ANNUAL        = process.env.PAYSTACK_PLAN_ANNUAL  || '';
 const APP_URL            = process.env.APP_URL || 'https://reelscript-studio-2.onrender.com';
 const ADMIN_SECRET       = process.env.ADMIN_SECRET || 'reelscript_admin_2026';
+
+// Plan catalogue — amounts in kobo (NGN). Annual = 10 months price (2 months free)
+const PLANS = {
+  monthly: { code: PLAN_MONTHLY, amount: 1500000,  interval: 'monthly', label: 'Pro Monthly' },
+  annual:  { code: PLAN_ANNUAL,  amount: 15000000, interval: 'annually', label: 'Pro Annual' },
+};
 
 /* ════════════════════════════════
    SUPABASE HELPER
@@ -72,6 +81,9 @@ async function sb(method, table, opts = {}) {
 /* ════════════════════════════════
    MIDDLEWARE
 ════════════════════════════════ */
+// Webhook needs RAW body for signature verification — must come BEFORE json parser
+app.use('/api/paystack/webhook', express.raw({ type: '*/*', limit: '1mb' }));
+
 app.use(express.json({ limit: '20kb' }));
 
 app.use((req, res, next) => {
@@ -572,19 +584,21 @@ app.get('/api/rates', async (_req, res) => {
 });
 
 /* ════════════════════════════════
-   PAYSTACK — SUBSCRIBE
+   PAYSTACK — SUBSCRIBE (recurring plans)
+   Body: { plan: 'monthly' | 'annual' }
 ════════════════════════════════ */
-const PRICES = { NGN:1500000, GHS:13000, KES:195000, EGP:72500, XOF:1500000, ZAR:28000, USD:1000 };
-
 app.post('/api/subscribe', rateLimit(5, 60000), async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   const user  = token ? sessions.get(token) : null;
   if (!user) return res.status(401).json({ error: 'Please sign in to subscribe.' });
   if (!PAYSTACK_SECRET) return res.status(500).json({ error: 'Payment not configured on server.' });
 
-  const currency         = sanitiseShort(req.body.currency         || 'NGN').toUpperCase();
-  const paystackCurrency = sanitiseShort(req.body.paystackCurrency || 'NGN').toUpperCase();
-  const amount           = PRICES[currency] || PRICES.NGN;
+  const planKey = (req.body.plan === 'annual') ? 'annual' : 'monthly';
+  const plan    = PLANS[planKey];
+
+  if (!plan.code) {
+    return res.status(500).json({ error: `${plan.label} plan not configured. Add the plan code in settings.` });
+  }
 
   try {
     const resp = await fetch('https://api.paystack.co/transaction/initialize', {
@@ -592,10 +606,14 @@ app.post('/api/subscribe', rateLimit(5, 60000), async (req, res) => {
       headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: user.email,
-        amount,
-        currency: paystackCurrency,
-        plan: paystackCurrency === 'NGN' ? PAYSTACK_PLAN_CODE : undefined,
-        metadata: { token, email: user.email, currency },
+        amount: plan.amount,
+        currency: 'NGN',
+        plan: plan.code,                 // recurring subscription via plan code
+        metadata: {
+          email: user.email,
+          plan_key: planKey,
+          interval: plan.interval,
+        },
         callback_url: `${APP_URL}/api/paystack/callback`,
       }),
     });
@@ -609,7 +627,8 @@ app.post('/api/subscribe', rateLimit(5, 60000), async (req, res) => {
 });
 
 /* ════════════════════════════════
-   PAYSTACK CALLBACK
+   PAYSTACK CALLBACK (browser redirect after pay)
+   This is for UX only — real truth comes from the webhook.
 ════════════════════════════════ */
 app.get('/api/paystack/callback', async (req, res) => {
   const { reference } = req.query;
@@ -620,23 +639,10 @@ app.get('/api/paystack/callback', async (req, res) => {
     });
     const data = await resp.json();
     if (data.data?.status === 'success') {
-      const email = data.data.metadata?.email;
-      const sessionToken = data.data.metadata?.token;
-
-      // Update session
-      const sessionUser = sessionToken ? sessions.get(sessionToken) : null;
-      if (sessionUser) { sessionUser.plan = 'paid'; sessionUser.used = 0; }
-
-      // Persist to Supabase
-      if (email) {
-        const expires = new Date();
-        expires.setMonth(expires.getMonth() + 1);
-        await sb('PATCH', 'rs_users', {
-          filter: `email=eq.${encodeURIComponent(email.toLowerCase())}`,
-          body: { plan: 'paid', scripts_used: 0, subscription_expires: expires.toISOString() }
-        }).catch(e => console.error('Pro upgrade failed:', e.message));
-        console.log(`✅ Upgraded ${email} to Pro via Paystack`);
-      }
+      // The webhook will do the authoritative DB update.
+      // We optimistically update here too for instant UX.
+      const email = data.data.customer?.email || data.data.metadata?.email;
+      if (email) await activateSubscription(email.toLowerCase(), data.data);
       return res.redirect('/?payment=success');
     }
     res.redirect('/?payment=failed');
@@ -645,6 +651,211 @@ app.get('/api/paystack/callback', async (req, res) => {
     res.redirect('/?payment=failed');
   }
 });
+
+/* ════════════════════════════════
+   PAYSTACK WEBHOOK (authoritative)
+   Verifies signature, handles lifecycle events.
+════════════════════════════════ */
+app.post('/api/paystack/webhook', async (req, res) => {
+  // req.body is a Buffer (raw) because of express.raw middleware
+  const signature = req.headers['x-paystack-signature'];
+  if (!PAYSTACK_SECRET) return res.sendStatus(500);
+
+  // Verify signature
+  const hash = crypto.createHmac('sha512', PAYSTACK_SECRET).update(req.body).digest('hex');
+  if (hash !== signature) {
+    console.warn('⚠️  Webhook signature mismatch — rejected');
+    return res.sendStatus(401);
+  }
+
+  // Acknowledge immediately so Paystack doesn't retry
+  res.sendStatus(200);
+
+  let event;
+  try { event = JSON.parse(req.body.toString()); }
+  catch { return; }
+
+  const type = event.event;
+  const data = event.data || {};
+  const email = (data.customer?.email || data.metadata?.email || '').toLowerCase();
+  if (!email) return;
+
+  console.log(`📩 Webhook: ${type} for ${email}`);
+
+  try {
+    switch (type) {
+      case 'charge.success':
+      case 'subscription.create':
+        await activateSubscription(email, data);
+        break;
+
+      case 'invoice.create':
+      case 'invoice.update':
+        // Recurring renewal succeeded
+        if (data.status === 'success' || data.paid) {
+          await activateSubscription(email, data);
+        }
+        break;
+
+      case 'invoice.payment_failed':
+        await markPastDue(email);
+        break;
+
+      case 'subscription.not_renew':
+        // User/Paystack flagged subscription to not renew → cancelling
+        await markCancelling(email);
+        break;
+
+      case 'subscription.disable':
+        // Subscription fully ended
+        await expireSubscription(email);
+        break;
+
+      default:
+        // ignore other events
+        break;
+    }
+  } catch (err) {
+    console.error('Webhook handler error:', err.message);
+  }
+});
+
+/* ════════════════════════════════
+   SUBSCRIPTION STATE HELPERS
+════════════════════════════════ */
+async function activateSubscription(email, data) {
+  const interval = data.plan?.interval || data.metadata?.interval || 'monthly';
+  const now = new Date();
+  const next = new Date(now);
+  if (interval === 'annually' || interval === 'annual') next.setFullYear(next.getFullYear() + 1);
+  else next.setMonth(next.getMonth() + 1);
+
+  const body = {
+    plan: 'paid',
+    subscription_status: 'active',
+    subscription_interval: interval,
+    subscription_start: now.toISOString(),
+    subscription_next_payment: next.toISOString(),
+    subscription_expires: next.toISOString(),
+    cancel_at_period_end: false,
+    scripts_used: 0,
+  };
+  if (data.subscription_code || data.plan?.subscription_code) {
+    body.subscription_code = data.subscription_code || data.plan.subscription_code;
+  }
+  if (data.customer?.customer_code) body.paystack_customer_code = data.customer.customer_code;
+  if (data.plan?.plan_code || data.metadata?.plan_key) {
+    body.subscription_plan = data.plan?.plan_code || data.metadata?.plan_key;
+  }
+
+  await sb('PATCH', 'rs_users', {
+    filter: `email=eq.${encodeURIComponent(email)}`,
+    body,
+  });
+
+  // Update any live session
+  sessions.forEach(s => { if (s.email === email) { s.plan = 'paid'; s.used = 0; } });
+  console.log(`✅ Activated ${interval} Pro for ${email}`);
+}
+
+async function markPastDue(email) {
+  await sb('PATCH', 'rs_users', {
+    filter: `email=eq.${encodeURIComponent(email)}`,
+    body: { subscription_status: 'past_due' },
+  });
+  console.log(`⚠️  ${email} marked past_due`);
+}
+
+async function markCancelling(email) {
+  await sb('PATCH', 'rs_users', {
+    filter: `email=eq.${encodeURIComponent(email)}`,
+    body: { subscription_status: 'cancelling', cancel_at_period_end: true },
+  });
+  console.log(`🔻 ${email} set to cancel at period end`);
+}
+
+async function expireSubscription(email) {
+  await sb('PATCH', 'rs_users', {
+    filter: `email=eq.${encodeURIComponent(email)}`,
+    body: { plan: 'free', subscription_status: 'expired', cancel_at_period_end: false },
+  });
+  sessions.forEach(s => { if (s.email === email) s.plan = 'free'; });
+  console.log(`⛔ ${email} subscription expired → downgraded to free`);
+}
+
+/* ════════════════════════════════
+   CANCEL SUBSCRIPTION (self-service)
+   Disables auto-renew; user keeps Pro until period ends.
+════════════════════════════════ */
+app.post('/api/subscription/cancel', rateLimit(5, 60000), async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const user  = token ? sessions.get(token) : null;
+  if (!user) return res.status(401).json({ error: 'Not authenticated.' });
+
+  try {
+    const rows = await sb('GET', 'rs_users', {
+      filter: `email=eq.${encodeURIComponent(user.email)}`,
+      select: 'subscription_code,email',
+    });
+    const subCode = rows?.[0]?.subscription_code;
+
+    if (subCode && PAYSTACK_SECRET) {
+      // Fetch subscription to get email token for disable
+      const subResp = await fetch(`https://api.paystack.co/subscription/${subCode}`, {
+        headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET}` },
+      });
+      const subData = await subResp.json();
+      const emailToken = subData.data?.email_token;
+
+      if (emailToken) {
+        await fetch('https://api.paystack.co/subscription/disable', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: subCode, token: emailToken }),
+        });
+      }
+    }
+
+    // Mark as cancelling — keeps Pro until period end
+    await sb('PATCH', 'rs_users', {
+      filter: `email=eq.${encodeURIComponent(user.email)}`,
+      body: { subscription_status: 'cancelling', cancel_at_period_end: true },
+    });
+
+    res.json({ success: true, message: 'Subscription will not renew. You keep Pro until your billing period ends.' });
+  } catch (err) {
+    console.error('Cancel error:', err.message);
+    res.status(500).json({ error: 'Could not cancel. Please try again or contact support.' });
+  }
+});
+
+/* ════════════════════════════════
+   GET SUBSCRIPTION STATUS
+════════════════════════════════ */
+app.get('/api/subscription', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const user  = token ? sessions.get(token) : null;
+  if (!user) return res.status(401).json({ error: 'Not authenticated.' });
+
+  try {
+    const rows = await sb('GET', 'rs_users', {
+      filter: `email=eq.${encodeURIComponent(user.email)}`,
+      select: 'plan,subscription_status,subscription_interval,subscription_next_payment,subscription_expires,cancel_at_period_end',
+    });
+    const u = rows?.[0] || {};
+    res.json({
+      plan: u.plan || 'free',
+      status: u.subscription_status || 'free',
+      interval: u.subscription_interval || '',
+      next_payment: u.subscription_next_payment || null,
+      expires: u.subscription_expires || null,
+      cancel_at_period_end: u.cancel_at_period_end || false,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not load subscription.' });
+  }
+});
+
 
 /* ════════════════════════════════
    ADMIN — UPGRADE USER
@@ -688,10 +899,12 @@ app.get('/api/admin/users', async (req, res) => {
 ════════════════════════════════ */
 app.get('/api/health', (_req, res) => {
   res.json({
-    status: 'ok', version: '4.0.0',
+    status: 'ok', version: '5.0.0',
     anthropic: ANTHROPIC_API_KEY ? '✓' : '✗',
     supabase:  SUPABASE_URL      ? '✓' : '✗',
     paystack:  PAYSTACK_SECRET   ? '✓' : '✗',
+    plan_monthly: PLAN_MONTHLY ? '✓' : '✗',
+    plan_annual:  PLAN_ANNUAL  ? '✓' : '✗',
   });
 });
 
@@ -703,8 +916,10 @@ app.get('*', (_req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🎬 ReelScript Studio v4.0 → http://localhost:${PORT}`);
+  console.log(`\n🎬 ReelScript Studio v5.0 → http://localhost:${PORT}`);
   console.log(`   Anthropic : ${ANTHROPIC_API_KEY ? '✓ loaded' : '✗ MISSING'}`);
   console.log(`   Supabase  : ${SUPABASE_URL      ? '✓ loaded' : '✗ MISSING'}`);
-  console.log(`   Paystack  : ${PAYSTACK_SECRET   ? '✓ loaded' : '✗ not set'}\n`);
+  console.log(`   Paystack  : ${PAYSTACK_SECRET   ? '✓ loaded' : '✗ not set'}`);
+  console.log(`   Plan (M)  : ${PLAN_MONTHLY ? '✓ ' + PLAN_MONTHLY : '✗ not set'}`);
+  console.log(`   Plan (A)  : ${PLAN_ANNUAL  ? '✓ ' + PLAN_ANNUAL  : '✗ not set'}\n`);
 });

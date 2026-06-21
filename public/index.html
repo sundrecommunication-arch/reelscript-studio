@@ -738,6 +738,66 @@ textarea,input{font-family:'DM Sans',sans-serif;}
   border-radius:100px;padding:2px 7px;
   font-size:0.62rem;font-weight:700;
 }
+/* ══ PLAN TOGGLE (Monthly/Annual) ══ */
+.plan-toggle{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin-bottom:4px;
+}
+.plan-tab{
+  position:relative;
+  border:2px solid var(--border);
+  background:var(--paper);
+  border-radius:var(--r);
+  padding:12px 10px;
+  cursor:pointer;
+  transition:all .15s;
+  text-align:center;
+}
+.plan-tab.active{
+  border-color:var(--accent);
+  background:#fff4f0;
+}
+.plan-tab-name{
+  font-size:0.75rem;font-weight:600;
+  color:var(--muted);margin-bottom:3px;
+}
+.plan-tab.active .plan-tab-name{color:var(--accent);}
+.plan-tab-price{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:1.1rem;color:var(--ink);
+}
+.plan-tab-price span{font-size:0.7rem;font-weight:500;color:var(--muted);}
+.plan-badge{
+  position:absolute;top:-8px;right:-4px;
+  background:var(--green);color:#fff;
+  font-size:0.55rem;font-weight:700;
+  padding:2px 7px;border-radius:100px;
+  letter-spacing:0.03em;
+}
+/* Billing modal rows */
+.billing-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--border);
+  font-size:0.86rem;
+}
+.billing-row:last-of-type{border-bottom:none;}
+.billing-label{color:var(--muted);}
+.billing-value{font-weight:600;color:var(--ink);}
+.billing-status-pill{
+  padding:3px 10px;border-radius:100px;
+  font-size:0.7rem;font-weight:700;
+}
+.billing-status-pill.active{background:#e6f7ec;color:#1a7d3f;}
+.billing-status-pill.cancelling{background:#fff4e0;color:#b45309;}
+.billing-status-pill.past_due{background:#fde8e8;color:#c53030;}
+.billing-cancel-btn{
+  width:100%;margin-top:14px;
+  background:var(--paper);color:#c53030;
+  border:1.5px solid #f5c6c6;border-radius:var(--r);
+  padding:12px;font-size:0.84rem;font-weight:600;
+  cursor:pointer;transition:all .15s;
+}
+.billing-cancel-btn:hover{background:#fde8e8;}
 </style>
 </head>
 <body>
@@ -1161,33 +1221,43 @@ textarea,input{font-family:'DM Sans',sans-serif;}
     <div class="modal-head" style="background:var(--accent);"><h3>🚀 Upgrade to Pro</h3><span class="modal-close" onclick="closeModal('upgrade-modal')">✕</span></div>
     <div class="modal-body">
 
-      <!-- Currency selector inside modal -->
-      <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-        <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Pay in:</span>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-          <button class="curr-modal-btn active" data-c="NGN" onclick="setCurrModal('NGN')">🇳🇬 NGN</button>
-          <button class="curr-modal-btn" data-c="GHS" onclick="setCurrModal('GHS')">🇬🇭 GHS</button>
-          <button class="curr-modal-btn" data-c="KES" onclick="setCurrModal('KES')">🇰🇪 KES</button>
-          <button class="curr-modal-btn" data-c="EGP" onclick="setCurrModal('EGP')">🇪🇬 EGP</button>
-          <button class="curr-modal-btn" data-c="XOF" onclick="setCurrModal('XOF')">🌍 CFA</button>
-          <button class="curr-modal-btn" data-c="ZAR" onclick="setCurrModal('ZAR')">🇿🇦 ZAR</button>
-          <button class="curr-modal-btn" data-c="USD" onclick="setCurrModal('USD')">🇺🇸 USD</button>
-        </div>
+      <!-- Plan toggle: Monthly / Annual -->
+      <div class="plan-toggle">
+        <button class="plan-tab active" id="plan-tab-monthly" onclick="selectPlan('monthly')">
+          <div class="plan-tab-name">Monthly</div>
+          <div class="plan-tab-price">₦15,000<span>/mo</span></div>
+        </button>
+        <button class="plan-tab" id="plan-tab-annual" onclick="selectPlan('annual')">
+          <div class="plan-badge">SAVE ₦30,000</div>
+          <div class="plan-tab-name">Annual</div>
+          <div class="plan-tab-price">₦150,000<span>/yr</span></div>
+        </button>
       </div>
 
-      <div style="background:#fff4f0;border-radius:var(--r);padding:16px;text-align:center;">
-        <div id="upgrade-price" style="font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;color:var(--accent);">₦15,000</div>
-        <div id="upgrade-per-month" style="font-size:0.8rem;color:var(--muted);margin-top:2px;">per month · Cancel anytime · All 6 platforms</div>
+      <div style="background:#fff4f0;border-radius:var(--r);padding:14px;text-align:center;">
+        <div id="upgrade-price" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.9rem;color:var(--accent);">₦15,000</div>
+        <div id="upgrade-per-month" style="font-size:0.8rem;color:var(--muted);margin-top:2px;">per month · Auto-renews · Cancel anytime</div>
       </div>
+
       <div style="display:flex;flex-direction:column;gap:8px;">
         <div style="font-size:0.83rem;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);font-size:1rem;">✓</span> Unlimited script generations</div>
         <div style="font-size:0.83rem;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);font-size:1rem;">✓</span> Permanent script library</div>
         <div style="font-size:0.83rem;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);font-size:1rem;">✓</span> All 6 platforms + 6 languages</div>
-        <div style="font-size:0.83rem;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);font-size:1rem;">✓</span> Preferences saved across sessions</div>
+        <div style="font-size:0.83rem;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);font-size:1rem;">✓</span> Brand voice + audience targeting</div>
         <div style="font-size:0.83rem;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);font-size:1rem;">✓</span> Card, bank transfer, mobile money, USSD</div>
       </div>
-      <button class="modal-btn" id="paystack-pay-btn" onclick="payWithPaystack()">Pay ₦15,000/month with Paystack</button>
-      <div class="modal-note">Secured by Paystack · Your card details are never stored on our servers.</div>
+      <button class="modal-btn" id="paystack-pay-btn" onclick="payWithPaystack()">Subscribe ₦15,000/month</button>
+      <div class="modal-note">Secured by Paystack · Cancel anytime · Your card details are never stored on our servers.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BILLING / MANAGE SUBSCRIPTION MODAL ══ -->
+<div class="modal-overlay" id="billing-modal" onclick="closeModal('billing-modal')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:440px;">
+    <div class="modal-head"><h3>💳 Your Subscription</h3><span class="modal-close" onclick="closeModal('billing-modal')">✕</span></div>
+    <div class="modal-body" id="billing-body">
+      <div style="text-align:center;padding:20px;color:var(--muted);">Loading…</div>
     </div>
   </div>
 </div>
@@ -1628,25 +1698,13 @@ function setCurr(code) {
 }
 
 function updatePriceDisplays() {
-  const price    = formatPrice(CURR);
-  const c        = getCurrObj();
-  const perMonth = `per month · Cancel anytime`;
-
-  // Update upgrade modal price
-  const priceEl = document.getElementById('upgrade-price');
-  if (priceEl) priceEl.textContent = price;
-
-  const subEl = document.getElementById('upgrade-per-month');
-  if (subEl) subEl.textContent = perMonth;
-
-  // Update all upgrade buttons / banners
+  const price = formatPrice(CURR);
+  // Update any banner price displays (subscriptions themselves are NGN-only via plan toggle)
   document.querySelectorAll('.upgrade-price-display').forEach(el => {
     el.textContent = price + '/month';
   });
-
-  // Update pay button
-  const payBtn = document.getElementById('paystack-pay-btn');
-  if (payBtn) payBtn.textContent = `Pay ${price}/month with Paystack`;
+  // Note: the upgrade modal price is controlled by selectPlan() now,
+  // so we don't overwrite #upgrade-price or #paystack-pay-btn here.
 }
 
 // Fetch live exchange rates from server
@@ -2132,6 +2190,7 @@ function updateNavAuth() {
               <div class="user-dropdown-plan pro">⭐ Pro Account — Unlimited</div>
             </div>
             <div class="user-dropdown-item" onclick="openLibrary();closeUserMenu();">📚 My Scripts</div>
+            <div class="user-dropdown-item" onclick="openBilling();closeUserMenu();">💳 Manage Subscription</div>
             <div class="user-dropdown-item danger" onclick="signOut();">🚪 Sign Out</div>
           </div>
         </div>`;
@@ -2664,13 +2723,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDesktopControls();
   setupMobileControls();
   checkPaymentReturn();
-
-  // Restore saved currency
-  if (CURR !== 'NGN') {
-    setCurrModal(CURR);
-  }
-  updatePriceDisplays();
-  fetchExchangeRates(); // get live rates from server
 
   // Restore saved language
   if (LANG !== 'en') {
@@ -3278,59 +3330,163 @@ async function deleteScript(id) {
 }
 
 /* ══════════════════════════════════════
-   PAYSTACK
+   PAYSTACK — PLAN SUBSCRIPTION
 ══════════════════════════════════════ */
+let SELECTED_PLAN = 'monthly';
+
 function startUpgrade() {
   if (!S.user) { openAuth('login'); return; }
+  SELECTED_PLAN = 'monthly';
+  selectPlan('monthly');
   openModal('upgrade-modal');
-  // Restore saved currency in modal
-  setCurrModal(CURR);
-  updatePriceDisplays();
 }
 function openUpgrade() { startUpgrade(); }
 
-function setCurrModal(code) {
-  CURR = code;
-  localStorage.setItem('rs_curr', code);
-  // Update nav currency button
-  const c = CURRENCIES[code];
-  const navBtn = document.getElementById('curr-current');
-  if (navBtn) navBtn.textContent = c.symbol;
-  // Update nav dropdown active state
-  document.querySelectorAll('#curr-dropdown .lang-option').forEach(o => {
-    o.classList.toggle('active', o.dataset.curr === code);
-  });
-  // Update modal buttons active state
-  document.querySelectorAll('.curr-modal-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.c === code);
-  });
-  updatePriceDisplays();
+function selectPlan(plan) {
+  SELECTED_PLAN = plan;
+  document.getElementById('plan-tab-monthly')?.classList.toggle('active', plan === 'monthly');
+  document.getElementById('plan-tab-annual')?.classList.toggle('active', plan === 'annual');
+
+  const priceEl = document.getElementById('upgrade-price');
+  const subEl   = document.getElementById('upgrade-per-month');
+  const payBtn  = document.getElementById('paystack-pay-btn');
+
+  if (plan === 'annual') {
+    if (priceEl) priceEl.textContent = '₦150,000';
+    if (subEl)   subEl.textContent   = 'per year · 2 months free · Auto-renews';
+    if (payBtn)  payBtn.textContent  = 'Subscribe ₦150,000/year';
+  } else {
+    if (priceEl) priceEl.textContent = '₦15,000';
+    if (subEl)   subEl.textContent   = 'per month · Auto-renews · Cancel anytime';
+    if (payBtn)  payBtn.textContent  = 'Subscribe ₦15,000/month';
+  }
 }
 
 async function payWithPaystack() {
   if (!S.user) { openAuth('login'); return; }
-  closeModal('upgrade-modal');
-
-  const c = getCurrObj();
-  showToast('⏳ Connecting to Paystack…');
+  const btn = document.getElementById('paystack-pay-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Connecting…'; }
 
   try {
-    const res  = await fetch('/api/subscribe', {
+    const res = await fetch('/api/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.token },
-      body: JSON.stringify({ currency: c.code, paystackCurrency: c.paystackCode }),
+      body: JSON.stringify({ plan: SELECTED_PLAN }),
     });
     const data = await res.json();
     if (data.authorization_url) {
       window.location.href = data.authorization_url;
     } else {
-      showToast('❌ ' + (data.error || 'Could not initiate payment. Try again.'));
+      showToast('❌ ' + (data.error || 'Could not start subscription. Try again.'));
+      if (btn) { btn.disabled = false; selectPlan(SELECTED_PLAN); }
     }
   } catch (err) {
     showToast('❌ Payment error. Please try again.');
+    if (btn) { btn.disabled = false; selectPlan(SELECTED_PLAN); }
   }
 }
 
+/* ══════════════════════════════════════
+   BILLING / MANAGE SUBSCRIPTION
+══════════════════════════════════════ */
+async function openBilling() {
+  if (!S.user) { openAuth('login'); return; }
+  openModal('billing-modal');
+  const body = document.getElementById('billing-body');
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">Loading…</div>';
+
+  try {
+    const res = await fetch('/api/subscription', {
+      headers: { 'Authorization': 'Bearer ' + S.token }
+    });
+    const sub = await res.json();
+    renderBilling(sub);
+  } catch {
+    body.innerHTML = '<div style="text-align:center;padding:20px;color:#c53030;">Could not load billing info.</div>';
+  }
+}
+
+function renderBilling(sub) {
+  const body = document.getElementById('billing-body');
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('en-NG',{day:'numeric',month:'long',year:'numeric'}) : '—';
+
+  if (sub.plan !== 'paid' && sub.status === 'free') {
+    body.innerHTML = `
+      <div style="text-align:center;padding:10px 0 18px;">
+        <div style="font-size:2rem;margin-bottom:8px;">✨</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:4px;">You're on the Free plan</div>
+        <div style="font-size:0.83rem;color:var(--muted);line-height:1.5;">Upgrade to Pro for unlimited scripts, brand voice, and more.</div>
+      </div>
+      <button class="modal-btn" onclick="closeModal('billing-modal');openUpgrade();">🚀 Upgrade to Pro</button>`;
+    return;
+  }
+
+  const statusLabels = {
+    active:'Active', cancelling:'Cancelling', past_due:'Payment Due', expired:'Expired', free:'Free'
+  };
+  const intervalLabel = (sub.interval === 'annually' || sub.interval === 'annual') ? 'Annual' : 'Monthly';
+
+  let html = `
+    <div class="billing-row">
+      <span class="billing-label">Plan</span>
+      <span class="billing-value">⭐ Pro ${intervalLabel}</span>
+    </div>
+    <div class="billing-row">
+      <span class="billing-label">Status</span>
+      <span class="billing-status-pill ${sub.status}">${statusLabels[sub.status] || sub.status}</span>
+    </div>`;
+
+  if (sub.status === 'cancelling') {
+    html += `
+      <div class="billing-row">
+        <span class="billing-label">Access until</span>
+        <span class="billing-value">${fmtDate(sub.expires || sub.next_payment)}</span>
+      </div>
+      <div style="background:#fff4e0;border-radius:var(--r);padding:12px;margin-top:12px;font-size:0.8rem;color:#b45309;line-height:1.5;">
+        Your subscription will not renew. You'll keep Pro access until ${fmtDate(sub.expires || sub.next_payment)}.
+      </div>`;
+  } else if (sub.status === 'past_due') {
+    html += `
+      <div style="background:#fde8e8;border-radius:var(--r);padding:12px;margin-top:12px;font-size:0.8rem;color:#c53030;line-height:1.5;">
+        Your last payment failed. Please update your payment method to keep Pro access.
+      </div>
+      <button class="modal-btn" style="margin-top:12px;" onclick="closeModal('billing-modal');openUpgrade();">Retry Payment</button>`;
+  } else {
+    html += `
+      <div class="billing-row">
+        <span class="billing-label">Next billing date</span>
+        <span class="billing-value">${fmtDate(sub.next_payment)}</span>
+      </div>
+      <button class="billing-cancel-btn" onclick="cancelSubscription()">Cancel Subscription</button>`;
+  }
+
+  body.innerHTML = html;
+}
+
+async function cancelSubscription() {
+  if (!confirm('Cancel your Pro subscription? You will keep access until your billing period ends, then move to the Free plan.')) return;
+
+  const body = document.getElementById('billing-body');
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">Cancelling…</div>';
+
+  try {
+    const res = await fetch('/api/subscription/cancel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + S.token }
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast('✅ Subscription cancelled. You keep Pro until your period ends.');
+      openBilling(); // refresh
+    } else {
+      showToast('❌ ' + (data.error || 'Could not cancel.'));
+      openBilling();
+    }
+  } catch {
+    showToast('❌ Could not cancel. Try again.');
+    openBilling();
+  }
+}
 
 /* ══════════════════════════════════════
    MODALS
