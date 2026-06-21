@@ -2510,7 +2510,7 @@ function renderFilteredLibrary() {
     return;
   }
 
-  renderLibrary(filtered);
+  _renderScriptCards(filtered);
 }
 
 /* ══════════════════════════════════════
@@ -2884,12 +2884,12 @@ function toggleAudience(pfx) {
 function setAudChip(pfx, field, value) {
   // Update state
   S.audience[field] = value;
-  // Update input if exists
+  // Update input if exists (gender has no input, that's OK)
   const input = document.getElementById(pfx+'-aud-'+field);
   if (input) input.value = value;
-  // Update chip active states
-  const row = document.querySelectorAll(`[onclick*="setAudChip('${pfx}','${field}'"]`);
-  row.forEach(c => c.classList.toggle('active', c.getAttribute('onclick').includes(`'${value}'`)));
+  // Update chip active states in the closest chips row
+  const allChips = document.querySelectorAll(`[onclick*="setAudChip('${pfx}','${field}'"]`);
+  allChips.forEach(c => c.classList.toggle('active', c.getAttribute('onclick').includes(`'${value}'`)));
   updateAudPreview(pfx);
   // Update mobile step subtitle
   if (pfx === 'm') {
@@ -3205,36 +3205,7 @@ function _renderScriptCards(scripts) {
     </div>`).join('');
 }
 
-// Override renderFilteredLibrary to use _renderScriptCards
-const _origRenderFiltered = window.renderFilteredLibrary;
-function renderFilteredLibrary() {
-  const query  = (document.getElementById('m-lib-search')?.value || '').toLowerCase().trim();
-  const filter = _activeFilter;
-
-  let filtered = _allScripts;
-  if (filter !== 'all') filtered = filtered.filter(s => s.platform === filter);
-  if (query) filtered = filtered.filter(s =>
-    (s.industry||'').toLowerCase().includes(query) ||
-    (s.topic||'').toLowerCase().includes(query) ||
-    (s.script_text||'').toLowerCase().includes(query)
-  );
-
-  const countEl = document.getElementById('m-lib-count');
-  if (countEl) {
-    countEl.style.display = filtered.length !== _allScripts.length ? 'block' : 'none';
-    countEl.textContent = `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`;
-  }
-
-  if (!filtered.length) {
-    document.getElementById('m-library-list').innerHTML = `
-      <div class="lib-empty">
-        <div class="lib-empty-icon">${query ? '🔍' : '📭'}</div>
-        <div>${query ? `No scripts matching "${query}"` : 'No scripts for this platform yet.'}</div>
-      </div>`;
-    return;
-  }
-  _renderScriptCards(filtered);
-}
+// renderFilteredLibrary is defined above in SCRIPT HISTORY SEARCH section
 function toggleLib(id) {
   const card=document.getElementById('lib-'+id);
   const expanded=card.classList.toggle('expanded');
