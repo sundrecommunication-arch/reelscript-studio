@@ -137,7 +137,7 @@ function makeToken() {
 ════════════════════════════════ */
 const sessions  = new Map();
 const anonMap   = new Map();
-const SESSION_TTL = 30 * 60 * 1000;
+const SESSION_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 const ANON_LIMIT  = 3;
 const FREE_LIMIT  = 10;
 
@@ -256,6 +256,70 @@ app.post('/api/auth/signin', rateLimit(10, 60000), async (req, res) => {
   } catch (err) {
     console.error('Signin error:', err.message);
     res.status(500).json({ error: 'Sign in failed. Please try again.' });
+  }
+});
+
+/* ════════════════════════════════
+   RESTORE SESSION
+   Re-establishes a session after server restart/timeout.
+   Security: only restores if the email exists in the database.
+   The token itself is opaque; we trust localStorage possession +
+   email existence. (For higher security, switch to signed JWTs.)
+════════════════════════════════ */
+app.post('/api/auth/restore', rateLimit(20, 60000), async (req, res) => {
+  const email = sanitiseShort(req.body.email || '').toLowerCase();
+  const oldToken = sanitiseShort(req.body.token || '');
+
+  if (!email || !email.includes('@') || !oldToken) {
+    return res.status(400).json({ error: 'Invalid restore request.' });
+  }
+
+  try {
+    // Verify the account exists
+    const rows = await sb('GET', 'rs_users', {
+      filter: `email=eq.${encodeURIComponent(email)}`,
+    });
+    if (!rows || rows.length === 0) {
+      return res.status(401).json({ error: 'Account not found.' });
+    }
+
+    const user = rows[0];
+    const isPaid = user.plan === 'paid' &&
+      user.subscription_expires &&
+      new Date(user.subscription_expires) > new Date();
+
+    // Monthly usage reset check
+    const now = new Date();
+    const lastReset = user.last_reset ? new Date(user.last_reset) : null;
+    const isNewMonth = !lastReset ||
+      lastReset.getMonth() !== now.getMonth() ||
+      lastReset.getFullYear() !== now.getFullYear();
+    let scriptsUsed = user.scripts_used || 0;
+    if (isNewMonth && !isPaid) {
+      scriptsUsed = 0;
+      sb('PATCH', 'rs_users', {
+        filter: `email=eq.${encodeURIComponent(user.email)}`,
+        body: { scripts_used: 0, last_reset: now.toISOString() }
+      }).catch(() => {});
+    }
+
+    // Issue a fresh session token
+    const token = makeToken();
+    sessions.set(token, {
+      email:    user.email,
+      plan:     isPaid ? 'paid' : 'free',
+      used:     scriptsUsed,
+      platform: user.preferred_platform || 'instagram',
+      tone:     user.preferred_tone     || 'bold_educative',
+      industry: (user.preferred_industry && !user.preferred_industry.includes('@')) ? user.preferred_industry : '',
+      createdAt: Date.now(),
+    });
+    setTimeout(() => sessions.delete(token), SESSION_TTL);
+
+    res.json({ success: true, token, email: user.email });
+  } catch (err) {
+    console.error('Restore error:', err.message);
+    res.status(500).json({ error: 'Could not restore session.' });
   }
 });
 

@@ -2002,6 +2002,9 @@ async function doSignIn() {
     if (!res.ok) throw new Error(data.error || 'Sign in failed');
     S.token = data.token;
     S.user  = { email: data.email };
+    // Persist session across refreshes
+    localStorage.setItem('rs_token', data.token);
+    localStorage.setItem('rs_email', data.email);
     closeModal('auth-modal');
     await loadProfile();
     showToast('✅ Signed in!');
@@ -2031,6 +2034,9 @@ async function doSignUp() {
     if (!res.ok) throw new Error(data.error || 'Sign up failed');
     S.token = data.token;
     S.user  = { email: data.email };
+    // Persist session across refreshes
+    localStorage.setItem('rs_token', data.token);
+    localStorage.setItem('rs_email', data.email);
     closeModal('auth-modal');
     await loadProfile();
     showToast('🎉 Account created! Welcome to ReelScript.');
@@ -2574,9 +2580,13 @@ function applySuggestion(platform, topic) {
 function signOut() {
   // Clear session state
   S.user = null; S.token = null; S.profile = null;
+  S.brand = null;
   S.industry = ''; S.topic = ''; S.context = '';
   S.lastScript = ''; S.lastTitle = '';
   S.audience = { city:'', age:'', gender:'', interests:'', pain:'' };
+  // Clear persisted session
+  localStorage.removeItem('rs_token');
+  localStorage.removeItem('rs_email');
   clearTimeout(S.logoutTimer);
   closeUserMenu();
   updateNavAuth();
@@ -2641,15 +2651,10 @@ function signOut() {
 
 // Auto-logout after 30 minutes of inactivity
 function resetAutoLogout() {
+  // Auto-logout disabled — users stay signed in until they explicitly sign out.
+  // Session persists across refreshes via localStorage + server restore.
   clearTimeout(S.logoutTimer);
-  if (!S.user) return;
-  S.logoutTimer = setTimeout(() => {
-    signOut();
-    showToast('⏰ You were signed out after 30 minutes of inactivity.');
-  }, 30 * 60 * 1000);
 }
-document.addEventListener('click', () => { if(S.user) resetAutoLogout(); });
-document.addEventListener('keydown', () => { if(S.user) resetAutoLogout(); });
 
 /* ══════════════════════════════════════
    BOOT
@@ -2685,7 +2690,52 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('m-topic')?.addEventListener('blur', () => {
     if (S.topic.trim()) { document.getElementById('m-s3-sel').textContent=S.topic.slice(0,28)+(S.topic.length>28?'…':''); document.getElementById('m-s3').classList.add('done'); }
   });
+
+  // ── Restore saved session (keeps user signed in across refreshes) ──
+  restoreSession();
 });
+
+async function restoreSession() {
+  const token = localStorage.getItem('rs_token');
+  const email = localStorage.getItem('rs_email');
+  if (!token || !email) return;
+
+  S.token = token;
+  S.user  = { email };
+
+  // Validate token with server — if invalid, server re-issues via re-auth
+  try {
+    const res = await fetch('/api/profile', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) {
+      // Session still valid on server
+      await loadProfile();
+      resetAutoLogout();
+    } else {
+      // Server session expired (restart/timeout) — silently re-establish
+      const reAuth = await fetch('/api/auth/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, token })
+      });
+      if (reAuth.ok) {
+        const data = await reAuth.json();
+        S.token = data.token;
+        localStorage.setItem('rs_token', data.token);
+        await loadProfile();
+        resetAutoLogout();
+      } else {
+        // Could not restore — clear and stay logged out
+        S.token = null; S.user = null;
+        localStorage.removeItem('rs_token');
+        localStorage.removeItem('rs_email');
+      }
+    }
+  } catch {
+    // Network error — keep token, will retry on next action
+  }
+}
 
 function checkPaymentReturn() {
   const params = new URLSearchParams(window.location.search);
