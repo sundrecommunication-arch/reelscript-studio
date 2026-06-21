@@ -856,7 +856,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
           </div>
           <div class="audience-field full">
             <div class="audience-label">😣 Pain Points</div>
-            <input class="audience-input" id="d-aud-pain" placeholder="e.g. struggling to grow hair, no time to cook, can't afford quality…" autocomplete="off" oninput="syncAud('d')"/>
+            <input class="audience-input" id="d-aud-pain" placeholder="e.g. struggling to grow hair, no time to cook, can\'t afford quality…" autocomplete="off" oninput="syncAud('d')"/>
           </div>
         </div>
         <div class="audience-preview" id="d-aud-preview"></div>
@@ -885,7 +885,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
         <div class="loading-state" id="d-loading"><div class="spinner"></div><div class="loading-msg" id="d-loading-msg">Crafting your hook…</div></div>
         <div class="script-result" id="d-result"></div>
       </div>
-      <div class="out-footer" id="d-footer" style="display:none;"><div class="out-footer-hint">💡 Read aloud once before recording. Adjust anything that doesn't sound like you.</div><button class="copy-btn-big" onclick="copyScript()">Copy Script</button></div>
+      <div class="out-footer" id="d-footer" style="display:none;"><div class="out-footer-hint">💡 Read aloud once before recording. Adjust anything that doesn\'t sound like you.</div><button class="copy-btn-big" onclick="copyScript()">Copy Script</button></div>
       <!-- Desktop Feedback Bar -->
       <div class="feedback-bar" id="d-feedback-bar">
         <div class="feedback-label">✨ Improve this script</div>
@@ -907,7 +907,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
     <div class="divider">Creator Tips</div>
     <div class="d-tips-row">
       <div class="tip-card"><div class="tip-top"><div class="tip-dot" style="background:#1A73E8"></div><div class="tip-name">Hook in 2 seconds</div></div><div class="tip-body">Every platform decides in 2s if users stay. Open with a bold fact, sharp question, or hot take about your industry.</div></div>
-      <div class="tip-card"><div class="tip-top"><div class="tip-dot" style="background:var(--accent)"></div><div class="tip-name">Educate, don't sell</div></div><div class="tip-body">Scripts that teach outperform scripts that pitch. Give value first — your audience will come to you.</div></div>
+      <div class="tip-card"><div class="tip-top"><div class="tip-dot" style="background:var(--accent)"></div><div class="tip-name">Educate, don\'t sell</div></div><div class="tip-body">Scripts that teach outperform scripts that pitch. Give value first — your audience will come to you.</div></div>
       <div class="tip-card"><div class="tip-top"><div class="tip-dot" style="background:var(--green)"></div><div class="tip-name">One CTA only</div></div><div class="tip-body">Save · Share · Follow · Comment · DM. Pick exactly one per video. Asking for three gets you zero.</div></div>
     </div>
   </div>
@@ -1027,7 +1027,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
       <div class="divider" style="margin-top:20px;">Tips</div>
       <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;">
         <div class="tip-card" style="min-width:200px;flex-shrink:0;"><div class="tip-top"><div class="tip-dot" style="background:#1A73E8"></div><div class="tip-name">Hook in 2s</div></div><div class="tip-body">Open bold — stat, question, or hot take. Platforms decide in 2s.</div></div>
-        <div class="tip-card" style="min-width:200px;flex-shrink:0;"><div class="tip-top"><div class="tip-dot" style="background:var(--accent)"></div><div class="tip-name">Educate, don't sell</div></div><div class="tip-body">Scripts that teach outperform scripts that pitch.</div></div>
+        <div class="tip-card" style="min-width:200px;flex-shrink:0;"><div class="tip-top"><div class="tip-dot" style="background:var(--accent)"></div><div class="tip-name">Educate, don\'t sell</div></div><div class="tip-body">Scripts that teach outperform scripts that pitch.</div></div>
         <div class="tip-card" style="min-width:200px;flex-shrink:0;"><div class="tip-top"><div class="tip-dot" style="background:var(--green)"></div><div class="tip-name">One CTA only</div></div><div class="tip-body">Pick one: Save, Share, Follow, or DM. Never all four.</div></div>
       </div>
     </div>
@@ -1326,7 +1326,7 @@ const LANGS = {
       securedBy:'Secured by Paystack · Your card details are never stored on our servers.',
       myScripts:'📚 My Scripts', signOut:'🚪 Sign Out', proAccount:'⭐ Pro Account — Unlimited',
       loadingMsgs:['Crafting your hook…','Building scene breakdown…','Polishing your CTA…','Adding industry context…'],
-      heroTitle:'AI Script Generator',,
+      heroTitle:'AI Script Generator',
     }
   },
   yo: {
@@ -1375,7 +1375,7 @@ const LANGS = {
       upgradeProTitle:'🚀 Gbe Dide si Pro', perMonth:'fun oṣu · Fagilee nigbakugba',
       myScripts:'📚 Awọn Iwe Mi', signOut:'🚪 Jade', proAccount:'⭐ Akọọlẹ Pro — Ailopin',
       loadingMsgs:['Ntọkọ ibẹrẹ rẹ…','Kiko eto iṣẹlẹ…','Pipari CTA rẹ…'],
-      heroTitle:'Ẹrọ Iwe-afọwọkọ AI',,
+      heroTitle:'Ẹrọ Iwe-afọwọkọ AI',
     }
   },
   ha: {
@@ -1408,10 +1408,10 @@ const LANGS = {
       feedbackLabel:'✨ Inganta wannan rubutu',
       feedbackPlaceholder:'misali Sa shi ya fi ban dariya, karfi farko…',
       strongerHook:'🎣 Farko mai karfi', shorter:'✂️ Gajarta', moreFun:'😄 Dariya',
-      moreUrgency:'🔥 Ƙara gaggawa', newAngle:'🔄 Ra'ayi sabon', moreFormal:'💼 Hukuma',
+      moreUrgency:'🔥 Ƙara gaggawa', newAngle:'🔄 Ra\'ayi sabon', moreFormal:'💼 Hukuma',
       audienceTitle:'🎯 Bayanan Masu Sauraro', audienceOptional:'(zaɓi)',
       cityLabel:'📍 Gari / Wuri', ageLabel:'🎂 Rukuni na Shekara', genderLabel:'👤 Jinsi',
-      interestsLabel:'💡 Sha'awa', painLabel:'😣 Matsaloli',
+      interestsLabel:'💡 Sha\'awa', painLabel:'😣 Matsaloli',
       cityPlaceholder:'misali Lagos, Accra, Nairobi…',
       interestsPlaceholder:'misali kaya, motsa jiki, kyau…',
       painPlaceholder:'misali matsalar girma gashi…',
@@ -1423,8 +1423,8 @@ const LANGS = {
       signingIn:'Ana shiga…', creatingAccount:'Ana ƙirƙira asusun…',
       upgradeProTitle:'🚀 Haɓaka zuwa Pro', perMonth:'a wata · Soke kowane lokaci',
       myScripts:'📚 Rubutuna', signOut:'🚪 Fita', proAccount:'⭐ Asusun Pro — Marasa iyaka',
-      loadingMsgs:['Ana ƙirƙira farko…','Ana gina al'amari…','Ana kammala CTA…'],
-      heroTitle:'AI Script Generator',,
+      loadingMsgs:['Ana ƙirƙira farko…','Ana gina al\'amari…','Ana kammala CTA…'],
+      heroTitle:'AI Script Generator',
     }
   },
   ig: {
@@ -1473,7 +1473,7 @@ const LANGS = {
       upgradeProTitle:'🚀 Kwalite gaa Pro', perMonth:'n\'ọnwa · Kagbuo mgbe ọ bụla',
       myScripts:'📚 Edemede m', signOut:'🚪 Pụọ', proAccount:'⭐ Akaụntụ Pro — Enweghị oke',
       loadingMsgs:['Na-emepụta mmalite…','Na-ewu usoro ihe nkiri…','Na-emechaa CTA…'],
-      heroTitle:'AI Script Generator',,
+      heroTitle:'AI Script Generator',
     }
   },
   fr: {
@@ -1522,7 +1522,7 @@ const LANGS = {
       upgradeProTitle:'🚀 Passer à Pro', perMonth:'par mois · Annuler à tout moment',
       myScripts:'📚 Mes Scripts', signOut:'🚪 Déconnexion', proAccount:'⭐ Compte Pro — Illimité',
       loadingMsgs:['Création de l\'accroche…','Construction du scénario…','Finalisation du CTA…'],
-      heroTitle:'Générateur de Scripts IA',,
+      heroTitle:'Générateur de Scripts IA',
     }
   },
   pcm: {
@@ -1571,7 +1571,7 @@ const LANGS = {
       upgradeProTitle:'🚀 Upgrade to Pro', perMonth:'per month · Cancel anytime',
       myScripts:'📚 My Scripts', signOut:'🚪 Sign Out', proAccount:'⭐ Pro Account — Unlimited',
       loadingMsgs:['Dey craft di hook…','Dey build di scenes…','Dey finish di CTA…'],
-      heroTitle:'AI Script Generator',,
+      heroTitle:'AI Script Generator',
     }
   },
 };
@@ -2884,7 +2884,7 @@ function toggleAudience(pfx) {
 function setAudChip(pfx, field, value) {
   // Update state
   S.audience[field] = value;
-  // Update input if exists (gender has no input, that's OK)
+  // Update input if exists — gender chip has no input field, that is OK
   const input = document.getElementById(pfx+'-aud-'+field);
   if (input) input.value = value;
   // Update chip active states in the closest chips row
