@@ -262,19 +262,82 @@ app.post('/api/auth/signin', rateLimit(10, 60000), async (req, res) => {
 /* ════════════════════════════════
    GET PROFILE
 ════════════════════════════════ */
-app.get('/api/profile', (req, res) => {
+app.get('/api/profile', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   const user  = token ? sessions.get(token) : null;
   if (!user) return res.status(401).json({ error: 'Not authenticated.' });
-  res.json({
-    email: user.email,
-    plan:  user.plan,
-    scripts_used_this_month: user.used,
-    scripts_limit: user.plan === 'paid' ? 999999 : FREE_LIMIT,
-    preferred_platform: user.platform,
-    preferred_tone:     user.tone,
-    preferred_industry: user.industry,
-  });
+
+  // Fetch full profile from Supabase including brand fields
+  try {
+    const rows = await sb('GET', 'rs_users', {
+      filter: `email=eq.${encodeURIComponent(user.email)}`,
+      select: 'email,plan,scripts_used,preferred_platform,preferred_tone,preferred_industry,brand_name,brand_industry,brand_tone,brand_city,brand_difference,onboarding_done,subscription_expires',
+    });
+    const dbUser = rows?.[0];
+    res.json({
+      email: user.email,
+      plan:  user.plan,
+      scripts_used_this_month: user.used,
+      scripts_limit: user.plan === 'paid' ? 999999 : FREE_LIMIT,
+      preferred_platform: user.platform,
+      preferred_tone:     user.tone,
+      preferred_industry: user.industry,
+      // Brand voice fields
+      brand_name:       dbUser?.brand_name       || '',
+      brand_industry:   dbUser?.brand_industry   || '',
+      brand_tone:       dbUser?.brand_tone       || '',
+      brand_city:       dbUser?.brand_city       || '',
+      brand_difference: dbUser?.brand_difference || '',
+      onboarding_done:  dbUser?.onboarding_done  || false,
+    });
+  } catch {
+    // Fallback to session data only
+    res.json({
+      email: user.email,
+      plan:  user.plan,
+      scripts_used_this_month: user.used,
+      scripts_limit: user.plan === 'paid' ? 999999 : FREE_LIMIT,
+      preferred_platform: user.platform,
+      preferred_tone:     user.tone,
+      preferred_industry: user.industry,
+      brand_name:'', brand_industry:'', brand_tone:'', brand_city:'', brand_difference:'', onboarding_done:false,
+    });
+  }
+});
+
+/* ════════════════════════════════
+   SAVE BRAND VOICE
+════════════════════════════════ */
+app.post('/api/profile/brand', rateLimit(10, 60000), async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const user  = token ? sessions.get(token) : null;
+  if (!user) return res.status(401).json({ error: 'Not authenticated.' });
+
+  const {
+    brand_name, brand_industry, brand_tone,
+    brand_city, brand_difference, onboarding_done
+  } = req.body;
+
+  try {
+    await sb('PATCH', 'rs_users', {
+      filter: `email=eq.${encodeURIComponent(user.email)}`,
+      body: {
+        brand_name:       sanitise(brand_name       || '', 100),
+        brand_industry:   sanitise(brand_industry   || '', 100),
+        brand_tone:       sanitise(brand_tone       || '', 50),
+        brand_city:       sanitise(brand_city       || '', 100),
+        brand_difference: sanitise(brand_difference || '', 300),
+        onboarding_done:  Boolean(onboarding_done),
+      }
+    });
+    // Update session
+    user.brand_name       = brand_name;
+    user.onboarding_done  = true;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Brand save error:', err.message);
+    res.status(500).json({ error: 'Could not save brand profile.' });
+  }
 });
 
 /* ════════════════════════════════

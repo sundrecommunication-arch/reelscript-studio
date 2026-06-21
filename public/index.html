@@ -517,6 +517,227 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .m-usage-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .3s;}
 .m-usage-label{font-size:0.72rem;color:var(--muted);white-space:nowrap;}
 
+/* ══════════════════════════════════════
+   ONBOARDING WIZARD — MOBILE FIRST
+══════════════════════════════════════ */
+.onboard-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.7);
+  z-index:800;
+  display:none;
+  align-items:flex-end; /* slides up from bottom on mobile */
+  justify-content:center;
+  padding:0;
+}
+.onboard-overlay.open{display:flex;}
+.onboard-sheet{
+  background:var(--card);
+  border-radius:24px 24px 0 0;
+  width:100%;
+  max-width:520px;
+  max-height:90vh;
+  overflow-y:auto;
+  padding:0 0 calc(env(safe-area-inset-bottom,0px) + 20px);
+  animation:slideUp .3s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(min-width:800px){
+  .onboard-overlay{align-items:center;padding:20px;}
+  .onboard-sheet{border-radius:20px;max-height:85vh;}
+}
+.onboard-handle{
+  width:40px;height:4px;
+  background:var(--border);border-radius:2px;
+  margin:12px auto 0;
+}
+.onboard-header{
+  padding:20px 20px 0;
+  text-align:center;
+}
+.onboard-step-dots{
+  display:flex;justify-content:center;gap:6px;
+  margin:12px 0 4px;
+}
+.onboard-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--border);transition:all .2s;
+}
+.onboard-dot.active{background:var(--accent);width:20px;border-radius:4px;}
+.onboard-dot.done{background:var(--green);}
+.onboard-emoji{font-size:2.4rem;margin-bottom:8px;}
+.onboard-q{
+  font-family:'Syne',sans-serif;font-weight:700;
+  font-size:1.15rem;letter-spacing:-0.02em;
+  line-height:1.25;margin-bottom:6px;
+}
+.onboard-sub{font-size:0.82rem;color:var(--muted);line-height:1.5;}
+.onboard-body{padding:16px 20px;}
+.onboard-input{
+  width:100%;border:1.5px solid var(--border);
+  border-radius:var(--r);padding:14px;
+  font-size:1rem;font-family:'DM Sans',sans-serif;
+  background:var(--paper);color:var(--ink);
+  transition:border-color .15s;
+}
+.onboard-input:focus{outline:none;border-color:var(--accent);}
+.onboard-input::placeholder{color:#BBB;}
+.onboard-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.onboard-chip{
+  border:1.5px solid var(--border);background:var(--paper);
+  border-radius:100px;padding:8px 16px;
+  font-size:0.82rem;font-weight:500;cursor:pointer;
+  transition:all .15s;color:var(--ink);
+  min-height:40px;display:flex;align-items:center;
+}
+.onboard-chip:hover,.onboard-chip:active{border-color:var(--accent);color:var(--accent);}
+.onboard-chip.selected{background:var(--accent);color:#fff;border-color:var(--accent);}
+.onboard-footer{
+  padding:16px 20px 0;
+  display:flex;gap:10px;
+}
+.onboard-btn{
+  flex:1;padding:15px;
+  background:var(--accent);color:#fff;
+  border:none;border-radius:var(--r);
+  font-family:'Syne',sans-serif;font-weight:700;
+  font-size:1rem;cursor:pointer;
+  transition:all .15s;
+}
+.onboard-btn:hover{background:#e04e00;}
+.onboard-btn.secondary{
+  background:var(--paper);color:var(--muted);
+  border:1.5px solid var(--border);flex:0 0 auto;
+  padding:15px 20px;font-size:0.85rem;
+}
+.onboard-skip{
+  text-align:center;padding:12px;
+  font-size:0.75rem;color:var(--muted);
+  cursor:pointer;text-decoration:underline;
+}
+
+/* ══════════════════════════════════════
+   BRAND VOICE CARD — MOBILE FIRST
+══════════════════════════════════════ */
+.brand-voice-card{
+  background:linear-gradient(135deg,#0D0D0D,#2A2A2A);
+  color:#fff;border-radius:var(--r-lg);
+  padding:16px;margin-bottom:12px;
+  display:none;
+}
+.brand-voice-card.show{display:block;}
+.bv-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.bv-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;}
+.bv-edit{font-size:0.72rem;color:rgba(255,255,255,0.5);cursor:pointer;text-decoration:underline;}
+.bv-edit:hover{color:#fff;}
+.bv-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.bv-tag{
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:100px;padding:4px 10px;
+  font-size:0.72rem;color:rgba(255,255,255,0.85);
+}
+.bv-tag.accent{background:rgba(255,92,0,0.3);border-color:rgba(255,92,0,0.5);color:#ff8c5a;}
+
+/* ══════════════════════════════════════
+   SCRIPT HISTORY SEARCH — MOBILE FIRST
+══════════════════════════════════════ */
+.lib-search-bar{
+  display:flex;gap:8px;margin-bottom:12px;
+  position:sticky;top:0;
+  background:var(--paper);
+  padding:0 0 8px;
+  z-index:10;
+}
+.lib-search-input{
+  flex:1;border:1.5px solid var(--border);
+  border-radius:var(--r);padding:11px 14px;
+  font-size:0.88rem;background:var(--card);
+  color:var(--ink);transition:border-color .15s;
+  font-family:'DM Sans',sans-serif;
+}
+.lib-search-input:focus{outline:none;border-color:var(--accent);}
+.lib-search-input::placeholder{color:#BBB;}
+.lib-filter-row{
+  display:flex;gap:6px;overflow-x:auto;
+  margin-bottom:10px;padding-bottom:4px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.lib-filter-row::-webkit-scrollbar{display:none;}
+.lib-filter{
+  border:1.5px solid var(--border);background:var(--card);
+  border-radius:100px;padding:6px 12px;
+  font-size:0.72rem;font-weight:600;
+  cursor:pointer;white-space:nowrap;
+  transition:all .12s;color:var(--muted);
+  flex-shrink:0;min-height:36px;
+  display:flex;align-items:center;
+}
+.lib-filter.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.lib-empty{
+  text-align:center;padding:40px 20px;
+  color:var(--muted);font-size:0.85rem;line-height:1.6;
+}
+.lib-empty-icon{font-size:2rem;margin-bottom:8px;}
+.lib-count{
+  font-size:0.72rem;color:var(--muted);
+  margin-bottom:8px;font-weight:500;
+}
+
+/* ══════════════════════════════════════
+   PERSONALISED SUGGESTIONS — MOBILE FIRST
+══════════════════════════════════════ */
+.suggestions-strip{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:14px;margin-bottom:12px;
+  display:none;
+}
+.suggestions-strip.show{display:block;}
+.sugg-header{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:10px;
+}
+.sugg-title{
+  font-family:'Syne',sans-serif;font-weight:700;
+  font-size:0.85rem;flex:1;
+}
+.sugg-refresh{
+  font-size:0.72rem;color:var(--accent);
+  cursor:pointer;font-weight:600;
+}
+.sugg-items{
+  display:flex;gap:8px;
+  overflow-x:auto;padding-bottom:4px;
+  scrollbar-width:none;
+}
+.sugg-items::-webkit-scrollbar{display:none;}
+.sugg-item{
+  flex-shrink:0;
+  background:var(--paper);
+  border:1.5px solid var(--border);
+  border-radius:var(--r);
+  padding:10px 12px;
+  cursor:pointer;
+  transition:all .15s;
+  min-width:160px;max-width:200px;
+}
+.sugg-item:hover,.sugg-item:active{border-color:var(--accent);background:#fff8f5;}
+.sugg-platform{
+  font-size:0.6rem;font-weight:700;
+  letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:4px;
+}
+.sugg-topic{
+  font-size:0.78rem;font-weight:600;
+  color:var(--ink);line-height:1.35;
+}
+.sugg-tag{
+  display:inline-block;margin-top:5px;
+  background:var(--accent);color:#fff;
+  border-radius:100px;padding:2px 7px;
+  font-size:0.62rem;font-weight:700;
+}
 </style>
 </head>
 <body>
@@ -705,6 +926,24 @@ textarea,input{font-family:'DM Sans',sans-serif;}
       <!-- Mobile status strip — updated dynamically -->
       <div class="m-usage-strip" id="m-usage-strip" style="display:none;"></div>
 
+      <!-- Brand Voice Card -->
+      <div class="brand-voice-card" id="m-bv-card">
+        <div class="bv-header">
+          <div class="bv-title">🎙️ <span id="m-bv-name">Your Brand</span></div>
+          <span class="bv-edit" onclick="openModal('brand-modal')">Edit</span>
+        </div>
+        <div class="bv-tags" id="m-bv-tags"></div>
+      </div>
+
+      <!-- Personalised Suggestions -->
+      <div class="suggestions-strip" id="m-suggestions">
+        <div class="sugg-header">
+          <div class="sugg-title">💡 Suggested for you</div>
+          <span class="sugg-refresh" onclick="loadSuggestions()">↺ Refresh</span>
+        </div>
+        <div class="sugg-items" id="m-sugg-items"></div>
+      </div>
+
       <div class="upgrade-banner" id="m-upgrade-banner" style="display:none;margin-bottom:14px;">
         <div><h3>🚀 Upgrade to Pro</h3><p>Get unlimited scripts for ₦15,000/month.</p></div>
         <button class="upgrade-cta-btn" onclick="startUpgrade()">Upgrade</button>
@@ -823,6 +1062,27 @@ textarea,input{font-family:'DM Sans',sans-serif;}
     <div class="m-panel" id="m-panel-library">
       <h1 class="m-panel-title" id="m-lib-title">Your<br/><em>Library</em></h1>
       <p class="m-panel-sub" id="m-lib-sub">Sign in to save and access your scripts permanently.</p>
+
+      <!-- Search bar -->
+      <div class="lib-search-bar" id="m-lib-search-bar" style="display:none;">
+        <input type="search" class="lib-search-input" id="m-lib-search"
+          placeholder="🔍 Search scripts…"
+          autocomplete="off"
+          oninput="filterLibrary()"/>
+      </div>
+
+      <!-- Filter chips -->
+      <div class="lib-filter-row" id="m-lib-filters" style="display:none;">
+        <span class="lib-filter active" data-filter="all" onclick="setLibFilter('all')">All</span>
+        <span class="lib-filter" data-filter="instagram" onclick="setLibFilter('instagram')">📸 Instagram</span>
+        <span class="lib-filter" data-filter="youtube" onclick="setLibFilter('youtube')">▶️ YouTube</span>
+        <span class="lib-filter" data-filter="tiktok" onclick="setLibFilter('tiktok')">🎵 TikTok</span>
+        <span class="lib-filter" data-filter="facebook" onclick="setLibFilter('facebook')">👥 Facebook</span>
+        <span class="lib-filter" data-filter="linkedin" onclick="setLibFilter('linkedin')">💼 LinkedIn</span>
+        <span class="lib-filter" data-filter="twitter" onclick="setLibFilter('twitter')">🐦 X/Twitter</span>
+      </div>
+
+      <div class="lib-count" id="m-lib-count" style="display:none;"></div>
       <div id="m-library-list"></div>
     </div>
 
@@ -928,6 +1188,61 @@ textarea,input{font-family:'DM Sans',sans-serif;}
       </div>
       <button class="modal-btn" id="paystack-pay-btn" onclick="payWithPaystack()">Pay ₦15,000/month with Paystack</button>
       <div class="modal-note">Secured by Paystack · Your card details are never stored on our servers.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ONBOARDING WIZARD ══ -->
+<div class="onboard-overlay" id="onboard-overlay">
+  <div class="onboard-sheet" id="onboard-sheet">
+    <div class="onboard-handle"></div>
+    <div class="onboard-header">
+      <div class="onboard-step-dots" id="onboard-dots"></div>
+      <div class="onboard-emoji" id="onboard-emoji">👋</div>
+      <div class="onboard-q" id="onboard-q">Welcome! What's your business name?</div>
+      <div class="onboard-sub" id="onboard-sub">This helps us personalise every script for your brand.</div>
+    </div>
+    <div class="onboard-body" id="onboard-body"></div>
+    <div class="onboard-footer">
+      <button class="onboard-btn secondary" id="onboard-back-btn" onclick="onboardBack()" style="display:none;">← Back</button>
+      <button class="onboard-btn" id="onboard-next-btn" onclick="onboardNext()">Continue →</button>
+    </div>
+    <div class="onboard-skip" onclick="skipOnboarding()">Skip for now</div>
+  </div>
+</div>
+
+<!-- ══ BRAND VOICE MODAL ══ -->
+<div class="modal-overlay" id="brand-modal" onclick="closeModal('brand-modal')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:480px;">
+    <div class="modal-head"><h3>🎙️ Your Brand Voice</h3><span class="modal-close" onclick="closeModal('brand-modal')">✕</span></div>
+    <div class="modal-body" style="gap:12px;">
+      <div>
+        <div class="modal-label">Business Name</div>
+        <input type="text" class="modal-input" id="bv-name" placeholder="e.g. Glam by Amara, FitNaija, TechLagos…"/>
+      </div>
+      <div>
+        <div class="modal-label">Industry / Niche</div>
+        <input type="text" class="modal-input" id="bv-industry" placeholder="e.g. Hair Salon, Fitness Coach, Online Store…"/>
+      </div>
+      <div>
+        <div class="modal-label">Your City</div>
+        <input type="text" class="modal-input" id="bv-city" placeholder="e.g. Lagos, Accra, Nairobi…"/>
+      </div>
+      <div>
+        <div class="modal-label">Brand Tone</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;" id="bv-tone-chips">
+          <span class="onboard-chip" onclick="selectBvTone('bold_educative')">Bold & Educative</span>
+          <span class="onboard-chip" onclick="selectBvTone('conversational')">Conversational</span>
+          <span class="onboard-chip" onclick="selectBvTone('storytelling')">Storytelling</span>
+          <span class="onboard-chip" onclick="selectBvTone('hype')">Hype / Promo</span>
+          <span class="onboard-chip" onclick="selectBvTone('myth_buster')">Myth Buster</span>
+        </div>
+      </div>
+      <div>
+        <div class="modal-label">What Makes You Different?</div>
+        <textarea class="modal-input" id="bv-difference" rows="2" style="resize:none;" placeholder="e.g. We use only organic products. Family-owned since 2018. Free delivery in Lagos…"></textarea>
+      </div>
+      <button class="modal-btn" onclick="saveBrandVoice()">💾 Save Brand Voice</button>
     </div>
   </div>
 </div>
@@ -1597,8 +1912,10 @@ const S = {
   duration:'30s', context:'', lastScript:'', lastTitle:'',
   user: null, token: null, profile: null,
   logoutTimer: null,
-  // Audience targeting
   audience: { city:'', age:'', gender:'', interests:'', pain:'' },
+  brand: null,           // brand voice profile
+  pendingGenerate: false,// set true when onboarding interrupts generate
+  _onboardShown: false,  // only show onboarding once per session
   scriptMemory: JSON.parse(localStorage.getItem('rs_memory') || '{}'),
 };
 
@@ -1741,10 +2058,21 @@ async function loadProfile() {
     if (!res.ok) { S.token = null; S.user = null; return; }
     const data = await res.json();
     S.profile = data;
+    // Load brand voice from profile
+    S.brand = {
+      brand_name:       data.brand_name       || '',
+      brand_industry:   data.brand_industry   || '',
+      brand_tone:       data.brand_tone       || '',
+      brand_city:       data.brand_city       || '',
+      brand_difference: data.brand_difference || '',
+      onboarding_done:  data.onboarding_done  || false,
+    };
     applyPreferences();
     updateNavAuth();
     updateUsagePill();
-    loadLibrary(); // load scripts whenever profile loads
+    renderBrandVoiceCard();
+    loadLibrary();
+    if (S.brand.brand_name) loadSuggestions();
   } catch {}
 }
 
@@ -1901,6 +2229,346 @@ function updateUsagePill() {
   const mb = document.getElementById('m-upgrade-banner');
   if(db) db.style.display = showBanner ? 'flex' : 'none';
   if(mb) mb.style.display = showBanner ? 'flex' : 'none';
+}
+
+/* ══════════════════════════════════════
+   1. SMART ONBOARDING
+══════════════════════════════════════ */
+const ONBOARD_STEPS = [
+  {
+    emoji:'👋', q:'What\'s your business name?', sub:'We\'ll use this to personalise every script.',
+    type:'input', id:'ob-name', placeholder:'e.g. Glam by Amara, FitNaija, TechLagos…',
+    key:'brand_name'
+  },
+  {
+    emoji:'🏢', q:'What industry are you in?', sub:'Pick one or type your own.',
+    type:'chips+input', id:'ob-industry', placeholder:'or type your industry…',
+    key:'brand_industry',
+    chips:['Hair Salon','Beauty Spa','Fashion','Fitness','Restaurant','Online Store','Real Estate','Hospital','School','Tech','Photography','Events']
+  },
+  {
+    emoji:'📍', q:'Where is your business based?', sub:'Scripts will feel local to your audience.',
+    type:'chips+input', id:'ob-city', placeholder:'or type your city…',
+    key:'brand_city',
+    chips:['Lagos','Abuja','Port Harcourt','Accra','Nairobi','Cairo','Johannesburg','Dakar']
+  },
+  {
+    emoji:'🎙️', q:'What\'s your brand tone?', sub:'How do you naturally talk to your audience?',
+    type:'chips', id:'ob-tone', key:'brand_tone',
+    chips:['Bold & Educative','Conversational','Storytelling','Hype / Promo','Myth Buster']
+  },
+  {
+    emoji:'✨', q:'What makes you different?', sub:'Your unique edge. This gets injected into every script.',
+    type:'textarea', id:'ob-diff', placeholder:'e.g. We use only organic products. 10 years experience. Free delivery in Lagos…',
+    key:'brand_difference'
+  },
+];
+
+let obStep = 0;
+const obData = {};
+
+function renderOnboardStep() {
+  const step = ONBOARD_STEPS[obStep];
+
+  // Dots
+  const dotsEl = document.getElementById('onboard-dots');
+  dotsEl.innerHTML = ONBOARD_STEPS.map((_, i) =>
+    `<div class="onboard-dot ${i < obStep ? 'done' : i === obStep ? 'active' : ''}"></div>`
+  ).join('');
+
+  document.getElementById('onboard-emoji').textContent = step.emoji;
+  document.getElementById('onboard-q').textContent     = step.q;
+  document.getElementById('onboard-sub').textContent   = step.sub;
+
+  // Body
+  let html = '';
+  if (step.type === 'input') {
+    html = `<input class="onboard-input" id="${step.id}" placeholder="${step.placeholder}" value="${obData[step.key]||''}" autocomplete="off"/>`;
+  } else if (step.type === 'textarea') {
+    html = `<textarea class="onboard-input" id="${step.id}" placeholder="${step.placeholder}" rows="3" style="resize:none;">${obData[step.key]||''}</textarea>`;
+  } else if (step.type === 'chips') {
+    html = `<div class="onboard-chips">${step.chips.map(c =>
+      `<span class="onboard-chip${obData[step.key]===c?' selected':''}" onclick="selectObChip('${step.key}','${c}',this)">${c}</span>`
+    ).join('')}</div>`;
+  } else if (step.type === 'chips+input') {
+    html = `<div class="onboard-chips" style="margin-bottom:10px;">${step.chips.map(c =>
+      `<span class="onboard-chip${obData[step.key]===c?' selected':''}" onclick="selectObChip('${step.key}','${c}',this)">${c}</span>`
+    ).join('')}</div>
+    <input class="onboard-input" id="${step.id}" placeholder="${step.placeholder}" value="${(obData[step.key]&&!step.chips.includes(obData[step.key]))?obData[step.key]:''}" autocomplete="off"/>`;
+  }
+  document.getElementById('onboard-body').innerHTML = html;
+
+  // Back button
+  document.getElementById('onboard-back-btn').style.display = obStep > 0 ? 'flex' : 'none';
+
+  // Next button text
+  document.getElementById('onboard-next-btn').textContent =
+    obStep === ONBOARD_STEPS.length - 1 ? '🚀 Let\'s Go!' : 'Continue →';
+
+  // Focus input
+  setTimeout(() => {
+    const input = document.getElementById(step.id);
+    if (input && (step.type === 'input' || step.type === 'textarea')) input.focus();
+  }, 100);
+}
+
+function selectObChip(key, val, el) {
+  obData[key] = val;
+  el.closest('.onboard-chips').querySelectorAll('.onboard-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  // Clear text input if chips+input
+  const input = document.getElementById('ob-' + key.replace('brand_',''));
+  if (input) input.value = '';
+}
+
+function onboardNext() {
+  const step = ONBOARD_STEPS[obStep];
+  // Read input value if present
+  const input = document.getElementById(step.id);
+  if (input && input.value.trim()) {
+    obData[step.key] = input.value.trim();
+  }
+  // Validate required steps
+  if (obStep === 0 && !obData.brand_name) {
+    showToast('👆 Please enter your business name'); return;
+  }
+
+  if (obStep < ONBOARD_STEPS.length - 1) {
+    obStep++;
+    renderOnboardStep();
+  } else {
+    // Final step — save and close
+    finishOnboarding();
+  }
+}
+
+function onboardBack() {
+  if (obStep > 0) { obStep--; renderOnboardStep(); }
+}
+
+async function finishOnboarding() {
+  const btn = document.getElementById('onboard-next-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  // Save to Supabase via profile update
+  try {
+    const res = await fetch('/api/profile/brand', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.token },
+      body: JSON.stringify({ ...obData, onboarding_done: true })
+    });
+    if (res.ok) {
+      S.brand = { ...obData };
+      document.getElementById('onboard-overlay').classList.remove('open');
+      showToast('🎉 Brand profile saved! Scripts are now personalised for you.');
+      renderBrandVoiceCard();
+      loadSuggestions();
+      // Now proceed with the pending generate
+      if (S.pendingGenerate) { S.pendingGenerate = false; generate(); }
+    }
+  } catch (err) {
+    showToast('❌ Could not save profile. Try again.');
+  }
+  btn.disabled = false;
+}
+
+function skipOnboarding() {
+  document.getElementById('onboard-overlay').classList.remove('open');
+  if (S.pendingGenerate) { S.pendingGenerate = false; generate(); }
+}
+
+function openOnboarding() {
+  obStep = 0;
+  // Pre-fill from existing brand data
+  if (S.brand) Object.assign(obData, S.brand);
+  document.getElementById('onboard-overlay').classList.add('open');
+  renderOnboardStep();
+}
+
+/* ══════════════════════════════════════
+   2. BRAND VOICE
+══════════════════════════════════════ */
+let S_BV_TONE = '';
+
+function selectBvTone(val) {
+  S_BV_TONE = val;
+  document.querySelectorAll('#bv-tone-chips .onboard-chip').forEach(c => {
+    c.classList.toggle('selected', c.getAttribute('onclick').includes(`'${val}'`));
+  });
+}
+
+async function saveBrandVoice() {
+  const data = {
+    brand_name:       document.getElementById('bv-name').value.trim(),
+    brand_industry:   document.getElementById('bv-industry').value.trim(),
+    brand_city:       document.getElementById('bv-city').value.trim(),
+    brand_tone:       S_BV_TONE || S.brand?.brand_tone || '',
+    brand_difference: document.getElementById('bv-difference').value.trim(),
+    onboarding_done:  true,
+  };
+  try {
+    const res = await fetch('/api/profile/brand', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.token },
+      body: JSON.stringify(data)
+    });
+    if (res.ok) {
+      S.brand = data;
+      closeModal('brand-modal');
+      showToast('✅ Brand voice saved!');
+      renderBrandVoiceCard();
+    }
+  } catch { showToast('❌ Could not save. Try again.'); }
+}
+
+function renderBrandVoiceCard() {
+  const b = S.brand;
+  if (!b || !b.brand_name) return;
+
+  const card = document.getElementById('m-bv-card');
+  const nameEl = document.getElementById('m-bv-name');
+  const tagsEl = document.getElementById('m-bv-tags');
+
+  if (nameEl) nameEl.textContent = b.brand_name;
+
+  const tags = [];
+  if (b.brand_industry)   tags.push(`<span class="bv-tag accent">${b.brand_industry}</span>`);
+  if (b.brand_city)       tags.push(`<span class="bv-tag">📍 ${b.brand_city}</span>`);
+  if (b.brand_tone)       tags.push(`<span class="bv-tag">🎙️ ${b.brand_tone.replace('_',' ')}</span>`);
+  if (b.brand_difference) tags.push(`<span class="bv-tag" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">✨ ${b.brand_difference.slice(0,40)}</span>`);
+
+  if (tagsEl) tagsEl.innerHTML = tags.join('');
+  if (card) card.classList.add('show');
+
+  // Also populate brand modal fields
+  const bvName = document.getElementById('bv-name');
+  const bvInd  = document.getElementById('bv-industry');
+  const bvCity = document.getElementById('bv-city');
+  const bvDiff = document.getElementById('bv-difference');
+  if (bvName) bvName.value = b.brand_name || '';
+  if (bvInd)  bvInd.value  = b.brand_industry || '';
+  if (bvCity) bvCity.value = b.brand_city || '';
+  if (bvDiff) bvDiff.value = b.brand_difference || '';
+  if (b.brand_tone) selectBvTone(b.brand_tone);
+}
+
+function buildBrandPrompt() {
+  const b = S.brand;
+  if (!b || !b.brand_name) return '';
+  const parts = [];
+  if (b.brand_name)       parts.push(`Business: ${b.brand_name}`);
+  if (b.brand_industry)   parts.push(`Industry: ${b.brand_industry}`);
+  if (b.brand_city)       parts.push(`Location: ${b.brand_city}`);
+  if (b.brand_difference) parts.push(`What makes us different: ${b.brand_difference}`);
+  if (!parts.length) return '';
+  return `\n\nBRAND VOICE:\n${parts.join('\n')}\n\nWrite the script AS IF you are this brand's social media voice. Reference the business name naturally where appropriate. Reflect what makes them different.`;
+}
+
+/* ══════════════════════════════════════
+   3. SCRIPT HISTORY WITH SEARCH
+══════════════════════════════════════ */
+let _allScripts = [];
+let _activeFilter = 'all';
+
+function setLibFilter(filter) {
+  _activeFilter = filter;
+  document.querySelectorAll('.lib-filter').forEach(f =>
+    f.classList.toggle('active', f.dataset.filter === filter)
+  );
+  renderFilteredLibrary();
+}
+
+function filterLibrary() {
+  renderFilteredLibrary();
+}
+
+function renderFilteredLibrary() {
+  const query  = (document.getElementById('m-lib-search')?.value || '').toLowerCase().trim();
+  const filter = _activeFilter;
+
+  let filtered = _allScripts;
+  if (filter !== 'all') filtered = filtered.filter(s => s.platform === filter);
+  if (query) filtered = filtered.filter(s =>
+    (s.industry||'').toLowerCase().includes(query) ||
+    (s.topic||'').toLowerCase().includes(query) ||
+    (s.script_text||'').toLowerCase().includes(query)
+  );
+
+  const countEl = document.getElementById('m-lib-count');
+  if (countEl) {
+    countEl.style.display = 'block';
+    countEl.textContent = `${filtered.length} script${filtered.length !== 1 ? 's' : ''}${query ? ` matching "${query}"` : ''}`;
+  }
+
+  if (!filtered.length) {
+    document.getElementById('m-library-list').innerHTML = `
+      <div class="lib-empty">
+        <div class="lib-empty-icon">${query ? '🔍' : '📭'}</div>
+        <div>${query ? `No scripts matching "${query}"` : 'No scripts yet for this platform.'}</div>
+        <div style="margin-top:6px;font-size:0.78rem;">Generate your first script on the Build tab.</div>
+      </div>`;
+    return;
+  }
+
+  renderLibrary(filtered);
+}
+
+/* ══════════════════════════════════════
+   4. PERSONALISED SUGGESTIONS
+══════════════════════════════════════ */
+const SUGGESTION_TOPICS = {
+  'Hair Salon':    ['5 reasons your salon needs Google Business Profile','How to retain clients after their first visit','The truth about heat damage nobody tells you','Why clients stop coming back (and how to fix it)','Before and after: transformation content that converts'],
+  'Beauty Spa':    ['Why self-care is not a luxury in 2025','5 treatments your clients don\'t know you offer','The science behind glowing skin','Why your spa needs a loyalty program','How to attract corporate clients to your spa'],
+  'Fashion':       ['How to style one outfit 5 different ways','Why fast fashion is hurting your brand','Building a capsule wardrobe for Nigerian weather','How to price your custom designs','Behind the scenes of a fashion shoot'],
+  'Fitness':       ['The biggest gym mistake beginners make','How to lose weight without starving','Why rest days are as important as workouts','5 home exercises better than the gym','Nutrition myths Nigerian fitness coaches won\'t tell you'],
+  'Restaurant':    ['Why your jollof rice gets customers coming back','The secret to perfect suya every time','How we source our ingredients locally','Behind the scenes of our kitchen','Why Nigerians love this dish so much'],
+  'Online Store':  ['How to shop on our website in 3 steps','Why our products ship faster than the rest','Customer review that changed everything','How we package your order with care','5 products you didn\'t know we sell'],
+  'Hospital':      ['When to go to a hospital vs pharmacy','5 signs you need to see a doctor today','How we handle emergencies at our facility','Why annual checkups save lives','The truth about malaria treatment'],
+  'default':       ['Why your business needs short-form video in 2025','How to create content that converts','Behind the scenes of our daily operations','Customer success story that speaks for itself','3 mistakes small businesses make on social media'],
+};
+
+function loadSuggestions() {
+  if (!S.token) return;
+  const industry = S.brand?.brand_industry || S.industry || 'default';
+  const key = Object.keys(SUGGESTION_TOPICS).find(k => industry.toLowerCase().includes(k.toLowerCase())) || 'default';
+  const topics = SUGGESTION_TOPICS[key] || SUGGESTION_TOPICS.default;
+
+  // Shuffle and pick 5
+  const shuffled = [...topics].sort(() => Math.random() - 0.5).slice(0, 5);
+  const platforms = ['instagram','youtube','tiktok','facebook','linkedin'];
+
+  const html = shuffled.map((topic, i) => {
+    const plat = platforms[i % platforms.length];
+    const platEmoji = {instagram:'📸',youtube:'▶️',tiktok:'🎵',facebook:'👥',linkedin:'💼'}[plat] || '📱';
+    return `<div class="sugg-item" onclick="applySuggestion('${plat}','${topic.replace(/'/g,"\\'")}')">
+      <div class="sugg-platform">${platEmoji} ${plat}</div>
+      <div class="sugg-topic">${topic}</div>
+      <span class="sugg-tag">Try this →</span>
+    </div>`;
+  }).join('');
+
+  ['m-sugg-items'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+
+  document.getElementById('m-suggestions')?.classList.add('show');
+}
+
+function applySuggestion(platform, topic) {
+  selectPlatform(platform);
+  S.topic = topic;
+  ['d-topic','m-topic'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = topic;
+  });
+  // Mark step 3 done on mobile
+  const s3sel = document.getElementById('m-s3-sel');
+  if (s3sel) s3sel.textContent = topic.slice(0,28)+'…';
+  document.getElementById('m-s3')?.classList.add('done');
+  // Switch to build tab on mobile
+  if (window.innerWidth < 800) mTab('build');
+  showToast('💡 Topic applied — fill Industry and Generate!');
 }
 
 function signOut() {
@@ -2298,6 +2966,14 @@ async function generate() {
   if (!S.industry) { showToast('👆 Please enter your industry'); return; }
   if (!S.topic)    { showToast('👆 Please describe your topic'); return; }
 
+  // First-time generate — show onboarding if not done
+  if (S.token && S.brand !== null && !S.brand?.onboarding_done && !S._onboardShown) {
+    S._onboardShown = true;
+    S.pendingGenerate = true;
+    openOnboarding();
+    return;
+  }
+
   const plat = PLATFORMS.find(p=>p.id===S.platform);
   const title = `${plat.name} · ${S.industry} · ${S.topic.slice(0,36)}`;
 
@@ -2312,7 +2988,8 @@ async function generate() {
   const previousHooks = getPreviousHooks(memoryKey);
 
   const langInstruction = LANGS[LANG]?.ui?.scriptLang || 'Write the script in English.';
-  const audiencePrompt  = buildAudiencePrompt();
+  const audiencePrompt = buildAudiencePrompt();
+  const brandPrompt    = buildBrandPrompt();
 
   const sys = `You are an expert video script writer for short-form content. You write high-converting scripts for ${plat.name} across any industry.
 
@@ -2328,7 +3005,7 @@ Format every script with EXACTLY these headers:
 
 Write specifically for ${S.industry}. Real scenarios, real pain points. Never generic.
 
-LANGUAGE INSTRUCTION: ${langInstruction}${audiencePrompt}
+LANGUAGE INSTRUCTION: ${langInstruction}${audiencePrompt}${brandPrompt}
 
 STRICT NO-REPETITION RULE: Every script you generate must be completely unique. Never reuse the same hook opening, story angle, structure, or phrasing from any previous script. If this is a regeneration, approach the topic from a completely fresh angle — different hook type, different scene structure, different CTA style.${previousHooks}`;
 
@@ -2471,21 +3148,53 @@ async function loadLibrary() {
 function renderLibrary(scripts) {
   const sub  = document.getElementById('m-lib-sub');
   const list = document.getElementById('m-library-list');
+
   if (!S.token) {
     if (sub) sub.textContent = 'Sign in to save and access your scripts permanently.';
     if (list) list.innerHTML = '';
+    // Hide search
+    document.getElementById('m-lib-search-bar')?.style && (document.getElementById('m-lib-search-bar').style.display = 'none');
+    document.getElementById('m-lib-filters')?.style && (document.getElementById('m-lib-filters').style.display = 'none');
     return;
   }
-  if (sub) sub.textContent = scripts.length
-    ? `${scripts.length} script${scripts.length === 1 ? '' : 's'} saved to your account.`
+
+  // Store all scripts for filtering
+  _allScripts = scripts || [];
+  window._scripts = _allScripts;
+
+  // Show/hide search bar
+  const searchBar = document.getElementById('m-lib-search-bar');
+  const filterBar = document.getElementById('m-lib-filters');
+  if (searchBar) searchBar.style.display = _allScripts.length > 2 ? 'flex' : 'none';
+  if (filterBar) filterBar.style.display = _allScripts.length > 2 ? 'flex' : 'none';
+
+  if (sub) sub.textContent = _allScripts.length
+    ? `${_allScripts.length} script${_allScripts.length === 1 ? '' : 's'} saved`
     : 'No scripts yet — generate your first one!';
-  if (!scripts.length) { if (list) list.innerHTML = ''; return; }
+
+  if (!_allScripts.length) {
+    if (list) list.innerHTML = `
+      <div class="lib-empty">
+        <div class="lib-empty-icon">📝</div>
+        <div>No scripts yet.</div>
+        <div style="margin-top:6px;font-size:0.78rem;">Generate your first script on the Build tab.</div>
+      </div>`;
+    return;
+  }
+
+  // Render with current filter
+  renderFilteredLibrary();
+}
+
+function _renderScriptCards(scripts) {
+  const list = document.getElementById('m-library-list');
+  if (!list) return;
   const plColors = {instagram:'#E1306C',youtube:'#FF0000',tiktok:'#333',facebook:'#1877F2',linkedin:'#0A66C2',twitter:'#333'};
   list.innerHTML = scripts.map(s => `
     <div class="lib-card" id="lib-${s.id}">
       <div class="lib-card-top" onclick="toggleLib('${s.id}')">
         <span class="lib-plat-tag" style="background:${plColors[s.platform]||'#555'}">${s.platform}</span>
-        <span class="lib-industry">${s.industry} — ${(s.topic||'').slice(0,28)}</span>
+        <span class="lib-industry">${s.industry||''} — ${(s.topic||'').slice(0,28)}</span>
         <span class="lib-time">${new Date(s.created_at).toLocaleDateString('en-NG',{day:'numeric',month:'short'})}</span>
       </div>
       <div class="lib-preview">${(s.script_text||'').slice(0,200)}…</div>
@@ -2494,7 +3203,37 @@ function renderLibrary(scripts) {
         <button class="lib-btn danger" onclick="deleteScript('${s.id}')">Delete</button>
       </div>
     </div>`).join('');
-  window._scripts = scripts;
+}
+
+// Override renderFilteredLibrary to use _renderScriptCards
+const _origRenderFiltered = window.renderFilteredLibrary;
+function renderFilteredLibrary() {
+  const query  = (document.getElementById('m-lib-search')?.value || '').toLowerCase().trim();
+  const filter = _activeFilter;
+
+  let filtered = _allScripts;
+  if (filter !== 'all') filtered = filtered.filter(s => s.platform === filter);
+  if (query) filtered = filtered.filter(s =>
+    (s.industry||'').toLowerCase().includes(query) ||
+    (s.topic||'').toLowerCase().includes(query) ||
+    (s.script_text||'').toLowerCase().includes(query)
+  );
+
+  const countEl = document.getElementById('m-lib-count');
+  if (countEl) {
+    countEl.style.display = filtered.length !== _allScripts.length ? 'block' : 'none';
+    countEl.textContent = `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`;
+  }
+
+  if (!filtered.length) {
+    document.getElementById('m-library-list').innerHTML = `
+      <div class="lib-empty">
+        <div class="lib-empty-icon">${query ? '🔍' : '📭'}</div>
+        <div>${query ? `No scripts matching "${query}"` : 'No scripts for this platform yet.'}</div>
+      </div>`;
+    return;
+  }
+  _renderScriptCards(filtered);
 }
 function toggleLib(id) {
   const card=document.getElementById('lib-'+id);
