@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Analytics — ReelScript Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#0D0D0D;--paper:#F2EFE9;--accent:#FF5C00;--green:#00A86B;
+  --muted:#6B6B6B;--card:#FFFFFF;--border:#E2DDD6;--r:12px;--r-lg:18px;
+  --blue:#1877F2;--purple:#7C3AED;
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;}
+.nav{background:var(--ink);color:#fff;padding:calc(14px + var(--safe-t)) 20px 14px;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;display:flex;align-items:center;gap:8px;}
+.logo-mark{width:26px;height:26px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:800;}
+.wrap{max-width:900px;margin:0 auto;padding:24px 18px 80px;}
+
+/* Login gate */
+.gate{max-width:360px;margin:60px auto;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;text-align:center;}
+.gate h2{font-family:'Syne',sans-serif;font-weight:700;margin-bottom:6px;}
+.gate p{font-size:0.85rem;color:var(--muted);margin-bottom:18px;}
+.gate input{width:100%;border:1.5px solid var(--border);border-radius:var(--r);padding:12px;font-size:1rem;font-family:'DM Sans',sans-serif;margin-bottom:12px;}
+.gate input:focus{outline:none;border-color:var(--accent);}
+.gate button{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:13px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;}
+
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;margin-bottom:4px;letter-spacing:-0.02em;}
+.subtitle{font-size:0.85rem;color:var(--muted);margin-bottom:24px;}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;}
+.stat-label{font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.stat-value{font-family:'Syne',sans-serif;font-weight:800;font-size:1.9rem;letter-spacing:-0.02em;}
+.stat-value.accent{color:var(--accent);}
+.stat-value.green{color:var(--green);}
+.stat-sub{font-size:0.74rem;color:var(--muted);margin-top:3px;}
+
+.section{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:18px;}
+.section h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:16px;}
+
+/* Funnel bars */
+.bar-row{margin-bottom:14px;}
+.bar-head{display:flex;justify-content:space-between;font-size:0.84rem;margin-bottom:5px;}
+.bar-label{font-weight:500;}
+.bar-value{font-weight:700;}
+.bar-track{height:28px;background:var(--paper);border-radius:8px;overflow:hidden;position:relative;}
+.bar-fill{height:100%;border-radius:8px;transition:width .6s ease;min-width:2px;}
+.bar-fill.anon{background:var(--muted);}
+.bar-fill.free{background:var(--blue);}
+.bar-fill.pro{background:var(--accent);}
+.bar-fill.green{background:var(--green);}
+
+.refresh{background:var(--ink);color:#fff;border:none;border-radius:var(--r);padding:10px 18px;font-size:0.82rem;font-weight:600;cursor:pointer;margin-bottom:20px;}
+.loading{text-align:center;padding:40px;color:var(--muted);}
+.err{background:#fde8e8;color:#c53030;padding:14px;border-radius:var(--r);font-size:0.85rem;margin-bottom:16px;}
+table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+td{padding:8px 0;border-bottom:1px solid var(--border);}
+td:last-child{text-align:right;font-weight:700;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="logo"><span class="logo-mark">RS</span> Analytics</div>
+  <a href="/" style="color:#fff;font-size:0.8rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,0.1);padding:7px 14px;border-radius:8px;">← App</a>
+</nav>
+
+<!-- Login gate -->
+<div id="gate" class="gate">
+  <h2>🔒 Admin Access</h2>
+  <p>Enter your admin secret to view analytics.</p>
+  <input type="password" id="secret-input" placeholder="Admin secret" onkeydown="if(event.key==='Enter')loadDash()"/>
+  <button onclick="loadDash()">View Dashboard</button>
+  <div id="gate-err" style="color:#c53030;font-size:0.8rem;margin-top:10px;"></div>
+</div>
+
+<!-- Dashboard -->
+<div class="wrap" id="dash" style="display:none;">
+  <h1>📊 ReelScript Analytics</h1>
+  <div class="subtitle" id="last-updated">Loading…</div>
+  <button class="refresh" onclick="loadDash()">↻ Refresh</button>
+
+  <div id="dash-content"></div>
+</div>
+
+<script>
+let ADMIN_SECRET = '';
+
+async function loadDash() {
+  const input = document.getElementById('secret-input');
+  if (input && input.value) ADMIN_SECRET = input.value.trim();
+  if (!ADMIN_SECRET) { document.getElementById('gate-err').textContent = 'Enter the admin secret.'; return; }
+
+  try {
+    const res = await fetch('/api/admin/analytics?secret=' + encodeURIComponent(ADMIN_SECRET));
+    if (res.status === 401) {
+      document.getElementById('gate-err').textContent = 'Wrong secret. Try again.';
+      return;
+    }
+    const data = await res.json();
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('dash').style.display = 'block';
+    render(data);
+  } catch (err) {
+    document.getElementById('gate-err').textContent = 'Error loading data.';
+  }
+}
+
+function render(d) {
+  const s = d.summary;
+  document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleString('en-NG');
+
+  const maxScripts = Math.max(d.scripts_by_state.anonymous, d.scripts_by_state.free, d.scripts_by_state.pro, 1);
+  const pct = n => Math.round((n / maxScripts) * 100);
+
+  // Platform table rows
+  const platRows = Object.entries(d.scripts_by_platform)
+    .sort((a,b) => b[1] - a[1])
+    .map(([p, n]) => `<tr><td>${p}</td><td>${n}</td></tr>`).join('') || '<tr><td colspan="2" style="color:var(--muted)">No data yet</td></tr>';
+
+  document.getElementById('dash-content').innerHTML = `
+    <!-- Top stats -->
+    <div class="grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Scripts</div>
+        <div class="stat-value accent">${s.total_scripts}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value">${s.total_users}</div>
+        <div class="stat-sub">${s.free_users} free · ${s.pro_users} pro</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pro Subscribers</div>
+        <div class="stat-value green">${s.pro_users}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Signup → Pro</div>
+        <div class="stat-value">${s.signup_to_pro_rate}</div>
+        <div class="stat-sub">${s.total_subscriptions} of ${s.total_signups} signups</div>
+      </div>
+    </div>
+
+    <!-- Scripts by user state -->
+    <div class="section">
+      <h3>📝 Scripts Created by User Type</h3>
+      <div class="bar-row">
+        <div class="bar-head"><span class="bar-label">👤 Anonymous (before registration)</span><span class="bar-value">${d.scripts_by_state.anonymous}</span></div>
+        <div class="bar-track"><div class="bar-fill anon" style="width:${pct(d.scripts_by_state.anonymous)}%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-head"><span class="bar-label">✅ Free (registered)</span><span class="bar-value">${d.scripts_by_state.free}</span></div>
+        <div class="bar-track"><div class="bar-fill free" style="width:${pct(d.scripts_by_state.free)}%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-head"><span class="bar-label">⭐ Pro (subscribed)</span><span class="bar-value">${d.scripts_by_state.pro}</span></div>
+        <div class="bar-track"><div class="bar-fill pro" style="width:${pct(d.scripts_by_state.pro)}%"></div></div>
+      </div>
+    </div>
+
+    <!-- Conversion funnel -->
+    <div class="section">
+      <h3>🎯 Conversion Funnel</h3>
+      <div class="bar-row">
+        <div class="bar-head"><span class="bar-label">Anonymous scripts created</span><span class="bar-value">${d.funnel.anonymous_scripts}</span></div>
+        <div class="bar-track"><div class="bar-fill anon" style="width:100%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-head"><span class="bar-label">→ Signed up (free account)</span><span class="bar-value">${d.funnel.then_signed_up}</span></div>
+        <div class="bar-track"><div class="bar-fill free" style="width:${d.funnel.anonymous_scripts ? Math.round((d.funnel.then_signed_up / d.funnel.anonymous_scripts) * 100) : 0}%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-head"><span class="bar-label">→ Subscribed to Pro</span><span class="bar-value">${d.funnel.then_subscribed}</span></div>
+        <div class="bar-track"><div class="bar-fill pro" style="width:${d.funnel.then_signed_up ? Math.round((d.funnel.then_subscribed / d.funnel.then_signed_up) * 100) : 0}%"></div></div>
+      </div>
+    </div>
+
+    <!-- Time-based -->
+    <div class="grid">
+      <div class="stat-card">
+        <div class="stat-label">Last 24 Hours</div>
+        <div class="stat-value">${d.scripts_over_time.last_24h}</div>
+        <div class="stat-sub">scripts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Last 7 Days</div>
+        <div class="stat-value">${d.scripts_over_time.last_7d}</div>
+        <div class="stat-sub">scripts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Last 30 Days</div>
+        <div class="stat-value">${d.scripts_over_time.last_30d}</div>
+        <div class="stat-sub">scripts</div>
+      </div>
+    </div>
+
+    <!-- Platform breakdown -->
+    <div class="section">
+      <h3>📱 Scripts by Platform</h3>
+      <table><tbody>${platRows}</tbody></table>
+    </div>
+  `;
+}
+</script>
+
+</body>
+</html>
