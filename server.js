@@ -909,6 +909,13 @@ app.get('/api/health', (_req, res) => {
 });
 
 /* ════════════════════════════════
+   LEGAL PAGES
+════════════════════════════════ */
+app.get(['/legal', '/terms', '/privacy', '/refund'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'legal.html'));
+});
+
+/* ════════════════════════════════
    SPA FALLBACK
 ════════════════════════════════ */
 app.get('*', (_req, res) => {
