@@ -539,27 +539,14 @@ app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
     usage = { plan: 'anonymous', used, limit: ANON_LIMIT };
   }
 
-  // ── Call Claude ──
+  // ── Call Claude (with auto-retry on transient overload) ──
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1200,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
-      }),
+    const data = await callClaudeWithRetry({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1200,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
     });
-
-    const data = await response.json();
-    if (!response.ok) {
-      return res.status(response.status).json({ error: data.error?.message || `API error (${response.status})` });
-    }
 
     const text = data.content?.map(b => b.text || '').join('') || '';
 
@@ -591,9 +578,80 @@ app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
     res.json({ text, usage });
   } catch (err) {
     console.error('Generate error:', err.message);
+    // Friendly message for overload after retries exhausted
+    if (err.code === 'OVERLOADED') {
+      return res.status(503).json({
+        error: 'Our AI is handling a lot of requests right now. Please tap Generate again in a few seconds — it usually clears up immediately.',
+        retryable: true,
+      });
+    }
     res.status(500).json({ error: 'Server error. Please try again.' });
   }
 });
+
+/* ════════════════════════════════
+   CLAUDE API CALL WITH RETRY
+   Retries automatically on transient errors:
+   529 (Overloaded), 503, 429 (rate limit).
+   Exponential backoff: ~1s, 2s, 4s.
+════════════════════════════════ */
+async function callClaudeWithRetry(payload, maxRetries = 4) {
+  const TRANSIENT = [429, 503, 529];
+  let lastErr;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      // Read error body
+      const data = await response.json().catch(() => ({}));
+
+      // If transient and we have retries left, wait then retry
+      if (TRANSIENT.includes(response.status) && attempt < maxRetries) {
+        const waitMs = Math.min(1000 * Math.pow(2, attempt), 8000) + Math.random() * 300;
+        console.warn(`⚠️  Claude ${response.status} — retry ${attempt + 1}/${maxRetries} in ${Math.round(waitMs)}ms`);
+        await new Promise(r => setTimeout(r, waitMs));
+        lastErr = new Error(data.error?.message || `API ${response.status}`);
+        lastErr.code = response.status === 529 ? 'OVERLOADED' : 'TRANSIENT';
+        continue;
+      }
+
+      // Non-transient error, or out of retries
+      const e = new Error(data.error?.message || `API error (${response.status})`);
+      e.code = response.status === 529 ? 'OVERLOADED' : 'API_ERROR';
+      throw e;
+
+    } catch (err) {
+      lastErr = err;
+      // Network-level failure — retry too
+      if (attempt < maxRetries && !err.code) {
+        const waitMs = Math.min(1000 * Math.pow(2, attempt), 8000) + Math.random() * 300;
+        console.warn(`⚠️  Network error — retry ${attempt + 1}/${maxRetries} in ${Math.round(waitMs)}ms`);
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+      if (err.code) throw err;
+    }
+  }
+
+  // Exhausted retries
+  if (lastErr && lastErr.code === 'OVERLOADED') throw lastErr;
+  const e = lastErr || new Error('Generation failed');
+  if (!e.code) e.code = 'OVERLOADED'; // most common cause of exhausted retries
+  throw e;
+}
 
 /* ════════════════════════════════
    EXCHANGE RATES

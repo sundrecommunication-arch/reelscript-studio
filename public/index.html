@@ -3138,8 +3138,20 @@ Uniqueness seed: ${Date.now()} — use this to ensure your response is fresh and
     if (!res.ok) {
       if (data.showUpgrade) { openUpgrade(); setLoading(false,isMobile); return; }
       if (data.showSignup)  { showToast(data.error); openAuth('login'); setLoading(false,isMobile); return; }
+
+      // Auto-retry once on transient overload before showing any error
+      if (data.retryable && !S._didRetry) {
+        S._didRetry = true;
+        renderResult('⏳ Our AI is busy for a moment — trying again automatically…', 'One sec…', isMobile);
+        await new Promise(r => setTimeout(r, 2500));
+        setLoading(false, isMobile);
+        return generate(); // try again
+      }
+      S._didRetry = false;
+
       throw new Error(data.error||'Generation failed');
     }
+    S._didRetry = false;
 
     S.lastScript = data.text;
     S.lastTitle  = title;
