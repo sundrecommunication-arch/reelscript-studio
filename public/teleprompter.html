@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Teleprompter — ReelScript Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#0D0D0D;--ink2:#2A2A2A;--paper:#F2EFE9;--accent:#FF5C00;
+  --green:#00A86B;--muted:#6B6B6B;--card:#FFFFFF;--border:#E2DDD6;
+  --r:12px;--r-lg:18px;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden;}
+
+/* ─── SETUP SCREEN ─── */
+.setup{max-width:680px;margin:0 auto;padding:calc(20px + var(--safe-t)) 18px 40px;height:100dvh;overflow-y:auto;}
+.setup-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--ink);display:flex;align-items:center;gap:8px;}
+.logo-mark{width:26px;height:26px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:800;color:#fff;}
+.back-link{color:var(--ink);font-size:0.8rem;font-weight:600;background:var(--card);border:1px solid var(--border);padding:7px 14px;border-radius:8px;text-decoration:none;}
+
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.7rem;letter-spacing:-0.02em;margin-bottom:4px;}
+.sub{font-size:0.88rem;color:var(--muted);margin-bottom:22px;line-height:1.5;}
+
+.field-label{font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:block;}
+.script-input{width:100%;min-height:200px;border:1.5px solid var(--border);border-radius:var(--r);padding:14px;font-size:0.95rem;line-height:1.6;font-family:'DM Sans',sans-serif;resize:vertical;background:var(--card);color:var(--ink);}
+.script-input:focus{outline:none;border-color:var(--accent);}
+
+.syntax-help{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin:14px 0 22px;font-size:0.82rem;line-height:1.7;}
+.syntax-help strong{font-family:'Syne',sans-serif;}
+.syntax-tag{display:inline-block;padding:1px 7px;border-radius:5px;font-size:0.78rem;font-weight:600;margin:0 2px;}
+.syntax-tag.cue{background:var(--ink);color:#fff;}
+.syntax-tag.emph{background:#FFE3D3;color:var(--accent);}
+.syntax-tag.pause{background:var(--border);color:var(--ink2);}
+
+.controls-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;}
+.control-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;}
+.control-card .field-label{margin-bottom:10px;}
+.range-row{display:flex;align-items:center;gap:10px;}
+input[type=range]{flex:1;accent-color:var(--accent);height:4px;}
+.range-val{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;min-width:56px;text-align:right;}
+
+.theme-row{display:flex;gap:8px;flex-wrap:wrap;}
+.theme-chip{border:2px solid var(--border);border-radius:8px;padding:7px 12px;font-size:0.76rem;font-weight:600;cursor:pointer;transition:all .15s;}
+.theme-chip.active{border-color:var(--accent);}
+.theme-chip[data-theme="amber"]{background:#1a1200;color:#FFB000;}
+.theme-chip[data-theme="green"]{background:#001a0d;color:#00FF7F;}
+.theme-chip[data-theme="white"]{background:#fff;color:#000;}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-label{font-size:0.88rem;font-weight:500;}
+.toggle-desc{font-size:0.74rem;color:var(--muted);margin-top:2px;}
+.switch{position:relative;width:46px;height:26px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:var(--border);border-radius:100px;cursor:pointer;transition:.2s;}
+.slider:before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.switch input:checked + .slider{background:var(--accent);}
+.switch input:checked + .slider:before{transform:translateX(20px);}
+
+.start-btn{width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 20px rgba(255,92,0,0.28);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.start-btn:hover{background:#e04e00;}
+
+/* ─── PROMPTER SCREEN ─── */
+.prompter{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;background:#000;}
+.prompter.active{display:flex;}
+.prompter[data-theme="amber"]{background:#0a0700;}
+.prompter[data-theme="amber"] .prompter-text{color:#FFB000;}
+.prompter[data-theme="green"]{background:#000a05;}
+.prompter[data-theme="green"] .prompter-text{color:#00FF7F;}
+.prompter[data-theme="white"]{background:#fff;}
+.prompter[data-theme="white"] .prompter-text{color:#000;}
+
+.eye-line{position:absolute;top:30%;left:0;right:0;height:2px;background:var(--accent);z-index:5;pointer-events:none;box-shadow:0 0 20px rgba(255,92,0,0.5);}
+.eye-line.hidden{display:none;}
+.eye-line::before,.eye-line::after{content:'▶';position:absolute;top:50%;transform:translateY(-50%);color:var(--accent);font-size:0.7rem;}
+.eye-line::before{left:10px;}
+.eye-line::after{right:10px;content:'◀';}
+
+.prompter-viewport{flex:1;overflow:hidden;position:relative;}
+.prompter-scroll{will-change:transform;}
+.prompter-mirror-active .prompter-scroll{transform:scaleX(-1);}
+
+.prompter-text{max-width:650px;margin:0 auto;padding:30vh 40px 60vh;font-size:42px;line-height:1.5;font-weight:500;letter-spacing:0.01em;color:#fff;}
+.prompter-cue{display:inline-block;font-size:0.5em;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:2px 10px;border-radius:100px;background:rgba(255,92,0,0.25);color:var(--accent);vertical-align:middle;margin:0 4px;}
+.prompter[data-theme="white"] .prompter-cue{background:rgba(255,92,0,0.18);}
+.prompter-emphasis{background:rgba(255,92,0,0.22);padding:0 8px;border-radius:6px;font-weight:700;}
+.prompter-pause-block{display:flex;align-items:center;justify-content:center;margin:0.6em auto;max-width:300px;}
+.prompter-pause-block span{font-size:0.4em;font-weight:700;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;gap:10px;width:100%;}
+.prompter-pause-block span::before,.prompter-pause-block span::after{content:'';flex:1;height:1px;background:currentColor;opacity:0.4;}
+
+.prompter-bar{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 16px calc(14px + var(--safe-b));background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.1);flex-wrap:wrap;}
+.prompter[data-theme="white"] .prompter-bar{background:rgba(255,255,255,0.8);border-top:1px solid var(--border);}
+.pbar-btn{background:rgba(255,255,255,0.12);color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;min-height:44px;}
+.prompter[data-theme="white"] .pbar-btn{background:var(--ink);}
+.pbar-btn:hover{background:rgba(255,255,255,0.22);}
+.pbar-btn.primary{background:var(--accent);}
+.pbar-btn.primary:hover{background:#e04e00;}
+.pbar-speed{display:flex;align-items:center;gap:8px;color:#fff;font-size:0.78rem;}
+.prompter[data-theme="white"] .pbar-speed{color:var(--ink);}
+.pbar-speed input{width:90px;accent-color:var(--accent);}
+
+.prompter-exit{position:absolute;top:calc(14px + var(--safe-t));right:16px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:100px;width:40px;height:40px;font-size:1.1rem;cursor:pointer;z-index:10;backdrop-filter:blur(8px);}
+.prompter[data-theme="white"] .prompter-exit{background:rgba(0,0,0,0.15);color:#000;}
+
+.countdown{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);}
+.countdown.active{display:flex;}
+.countdown-num{font-family:'Syne',sans-serif;font-weight:800;font-size:8rem;color:var(--accent);animation:pulse 1s ease infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.15);opacity:0.7;}}
+
+@media(max-width:600px){
+  .controls-grid{grid-template-columns:1fr;}
+  .prompter-text{font-size:34px;padding-left:24px;padding-right:24px;}
+  h1{font-size:1.4rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SETUP SCREEN ═══════════ -->
+<div class="setup" id="setup">
+  <div class="setup-head">
+    <div class="logo"><span class="logo-mark">RS</span> Teleprompter</div>
+    <a href="/" class="back-link">← Back to App</a>
+  </div>
+
+  <h1>Read it like you wrote it</h1>
+  <p class="sub">Your script scrolls at your pace while you look straight at the camera.</p>
+
+  <label class="field-label">Your Script</label>
+  <textarea class="script-input" id="script-input" placeholder="Paste or type your script here…"></textarea>
+
+  <div class="syntax-help">
+    <strong>Delivery cues</strong> — add these to guide your delivery:<br/>
+    <span class="syntax-tag cue">[Smile]</span> brackets → acting cue &nbsp;·&nbsp;
+    <span class="syntax-tag emph">*word*</span> asterisks → emphasis &nbsp;·&nbsp;
+    <span class="syntax-tag pause">(pause)</span> → a beat to breathe
+  </div>
+
+  <div class="controls-grid">
+    <div class="control-card">
+      <label class="field-label">Scroll Speed (WPM)</label>
+      <div class="range-row">
+        <input type="range" id="wpm" min="80" max="250" value="130" step="5" oninput="updateWpm()"/>
+        <span class="range-val" id="wpm-val">130</span>
+      </div>
+    </div>
+    <div class="control-card">
+      <label class="field-label">Font Size</label>
+      <div class="range-row">
+        <input type="range" id="fontsize" min="24" max="60" value="42" step="2" oninput="updateFont()"/>
+        <span class="range-val" id="fontsize-val">42px</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-card" style="margin-bottom:22px;">
+    <label class="field-label">Colour Theme</label>
+    <div class="theme-row">
+      <span class="theme-chip active" data-theme="amber" onclick="setTheme('amber',this)">Amber on Black</span>
+      <span class="theme-chip" data-theme="green" onclick="setTheme('green',this)">Green on Black</span>
+      <span class="theme-chip" data-theme="white" onclick="setTheme('white',this)">Black on White</span>
+    </div>
+  </div>
+
+  <div class="control-card" style="margin-bottom:22px;">
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Mirror Mode</div>
+        <div class="toggle-desc">Flip text for glass teleprompters</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="mirror"/><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Eye-Line Guide</div>
+        <div class="toggle-desc">Show the reading indicator bar</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="eyeline" checked/><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">3-Second Countdown</div>
+        <div class="toggle-desc">Get ready before scrolling starts</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="countdown-toggle" checked/><span class="slider"></span></label>
+    </div>
+  </div>
+
+  <button class="start-btn" onclick="startPrompter()"><span>▶</span> Start Teleprompter</button>
+</div>
+
+<!-- ═══════════ PROMPTER SCREEN ═══════════ -->
+<div class="prompter" id="prompter" data-theme="amber">
+  <button class="prompter-exit" onclick="exitPrompter()">✕</button>
+  <div class="eye-line" id="eye-line"></div>
+  <div class="prompter-viewport" id="viewport">
+    <div class="prompter-scroll" id="scroll">
+      <div class="prompter-text" id="prompter-text"></div>
+    </div>
+  </div>
+  <div class="countdown" id="countdown"><div class="countdown-num" id="countdown-num">3</div></div>
+  <div class="prompter-bar">
+    <button class="pbar-btn primary" id="play-btn" onclick="togglePlay()">⏸ Pause</button>
+    <button class="pbar-btn" onclick="restartScroll()">↺ Restart</button>
+    <div class="pbar-speed">
+      <span>Speed</span>
+      <input type="range" id="live-wpm" min="80" max="250" value="130" step="5" oninput="liveWpm()"/>
+      <span id="live-wpm-val">130</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const P = {
+  wpm:130, fontSize:42, theme:'amber', mirror:false, eyeline:true, countdown:true,
+  playing:false, rafId:null, scrollY:0, pausedForBlock:false, lastTime:0,
+};
+
+/* SYNTAX COMPILER */
+function compileScriptToPrompter(rawScriptText){
+  if(!rawScriptText) return "";
+  return rawScriptText
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\[(.*?)\]/g,'<span class="prompter-cue" data-action="cue">$1</span>')
+    .replace(/\*(.*?)\*/g,'<span class="prompter-emphasis" data-action="highlight">$1</span>')
+    .replace(/\(pause\)/gi,'<div class="prompter-pause-block" data-action="pause" data-pause="1500"><span>PAUSE</span></div>')
+    .replace(/\n/g,'<br/>');
+}
+
+/* SETUP CONTROLS */
+function updateWpm(){ P.wpm=+document.getElementById('wpm').value; document.getElementById('wpm-val').textContent=P.wpm; }
+function updateFont(){ P.fontSize=+document.getElementById('fontsize').value; document.getElementById('fontsize-val').textContent=P.fontSize+'px'; }
+function setTheme(theme,el){ P.theme=theme; document.querySelectorAll('.theme-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); }
+
+/* START */
+function startPrompter(){
+  const raw=document.getElementById('script-input').value;
+  if(!raw.trim()){ alert('Please add a script first.'); return; }
+  P.mirror=document.getElementById('mirror').checked;
+  P.eyeline=document.getElementById('eyeline').checked;
+  P.countdown=document.getElementById('countdown-toggle').checked;
+
+  const prompter=document.getElementById('prompter');
+  const textEl=document.getElementById('prompter-text');
+  textEl.innerHTML=compileScriptToPrompter(raw);
+  textEl.style.fontSize=P.fontSize+'px';
+  prompter.dataset.theme=P.theme;
+  prompter.classList.toggle('prompter-mirror-active',P.mirror);
+  document.getElementById('eye-line').classList.toggle('hidden',!P.eyeline);
+
+  document.getElementById('live-wpm').value=P.wpm;
+  document.getElementById('live-wpm-val').textContent=P.wpm;
+
+  P.scrollY=0;
+  document.getElementById('scroll').style.transform='translateY(0px)';
+  prompter.classList.add('active');
+  if(prompter.requestFullscreen) prompter.requestFullscreen().catch(()=>{});
+
+  if(P.countdown) runCountdown(()=>beginScroll());
+  else beginScroll();
+}
+
+function runCountdown(done){
+  const overlay=document.getElementById('countdown');
+  const num=document.getElementById('countdown-num');
+  overlay.classList.add('active');
+  let n=3; num.textContent=n;
+  const iv=setInterval(()=>{
+    n--;
+    if(n<=0){ clearInterval(iv); overlay.classList.remove('active'); done(); }
+    else num.textContent=n;
+  },1000);
+}
+
+function exitPrompter(){
+  stopScroll();
+  document.getElementById('prompter').classList.remove('active');
+  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+}
+
+/* SCROLL MECHANICS */
+function beginScroll(){
+  P.playing=true; P.lastTime=performance.now();
+  document.getElementById('play-btn').textContent='⏸ Pause';
+  P.rafId=requestAnimationFrame(scrollLoop);
+}
+
+function scrollLoop(now){
+  if(!P.playing) return;
+  const dt=(now-P.lastTime)/1000; P.lastTime=now;
+  if(!P.pausedForBlock){
+    const lineHeight=P.fontSize*1.5;
+    const wordsPerLine=8;
+    const linesPerSec=(P.wpm/wordsPerLine)/60;
+    const pxPerSec=linesPerSec*lineHeight;
+    P.scrollY+=pxPerSec*dt;
+    document.getElementById('scroll').style.transform=`translateY(-${P.scrollY}px)`;
+    checkPauseBlocks();
+    const textEl=document.getElementById('prompter-text');
+    if(P.scrollY>textEl.scrollHeight){ stopScroll(); document.getElementById('play-btn').textContent='↺ Done'; return; }
+  }
+  P.rafId=requestAnimationFrame(scrollLoop);
+}
+
+function checkPauseBlocks(){
+  const eyeLineY=window.innerHeight*0.30;
+  document.querySelectorAll('.prompter-pause-block:not([data-done])').forEach(block=>{
+    const rect=block.getBoundingClientRect();
+    if(rect.top<=eyeLineY && rect.top>eyeLineY-40){
+      block.setAttribute('data-done','1');
+      const pauseMs=+block.dataset.pause||1500;
+      P.pausedForBlock=true;
+      setTimeout(()=>{ P.pausedForBlock=false; },pauseMs);
+    }
+  });
+}
+
+function togglePlay(){
+  const btn=document.getElementById('play-btn');
+  if(P.playing){ stopScroll(); btn.textContent='▶ Play'; }
+  else{ beginScroll(); btn.textContent='⏸ Pause'; }
+}
+function stopScroll(){ P.playing=false; if(P.rafId) cancelAnimationFrame(P.rafId); }
+function restartScroll(){
+  stopScroll(); P.scrollY=0;
+  document.getElementById('scroll').style.transform='translateY(0px)';
+  document.querySelectorAll('.prompter-pause-block').forEach(b=>b.removeAttribute('data-done'));
+  P.pausedForBlock=false;
+  if(P.countdown) runCountdown(()=>beginScroll()); else beginScroll();
+}
+function liveWpm(){ P.wpm=+document.getElementById('live-wpm').value; document.getElementById('live-wpm-val').textContent=P.wpm; }
+
+/* KEYBOARD SHORTCUTS */
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('prompter').classList.contains('active')) return;
+  if(e.code==='Space'){ e.preventDefault(); togglePlay(); }
+  if(e.code==='Escape') exitPrompter();
+  if(e.code==='ArrowUp'){ P.scrollY=Math.max(0,P.scrollY-50); document.getElementById('scroll').style.transform=`translateY(-${P.scrollY}px)`; }
+  if(e.code==='ArrowDown'){ P.scrollY+=50; document.getElementById('scroll').style.transform=`translateY(-${P.scrollY}px)`; }
+});
+
+/* ─── LOAD SCRIPT PASSED FROM THE APP ─── */
+(function loadIncomingScript(){
+  try{
+    // Script is passed via sessionStorage (set by the main app before opening)
+    const incoming = sessionStorage.getItem('rs_teleprompter_script');
+    if(incoming){
+      document.getElementById('script-input').value = incoming;
+      sessionStorage.removeItem('rs_teleprompter_script');
+    }
+  }catch(e){}
+})();
+</script>
+
+</body>
+</html>

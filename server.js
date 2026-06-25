@@ -564,7 +564,13 @@ app.post('/api/generate', rateLimit(20, 3600000), async (req, res) => {
 
     // ── Analytics: log script generation with user state ──
     if (text) {
-      const state = user ? (user.plan === 'paid' ? 'pro' : 'free') : 'anonymous';
+      // Determine state authoritatively. The in-memory session can lag behind
+      // the database (e.g. after a subscribe via webhook), so for logged-in
+      // users we trust the usage object which was just computed from the DB.
+      let state = 'anonymous';
+      if (user) {
+        state = (usage.plan === 'paid' || user.plan === 'paid') ? 'pro' : 'free';
+      }
       logEvent('script_generated', {
         email: user?.email || '',
         state,
@@ -1019,10 +1025,6 @@ app.get('/api/admin/analytics', async (req, res) => {
       pro:       scriptEvents.filter(e => e.user_state === 'pro').length,
     };
 
-    // Conversion counts
-    const signups = events.filter(e => e.event_type === 'signup').length;
-    const subscribes = events.filter(e => e.event_type === 'subscribe').length;
-
     // Scripts by platform
     const byPlatform = {};
     scriptEvents.forEach(e => {
@@ -1036,10 +1038,16 @@ app.get('/api/admin/analytics', async (req, res) => {
     const last7d  = scriptEvents.filter(e => now - new Date(e.created_at).getTime() < 7 * day).length;
     const last30d = scriptEvents.filter(e => now - new Date(e.created_at).getTime() < 30 * day).length;
 
-    // User totals
-    const allUsers = await sb('GET', 'rs_users', { select: 'plan' }) || [];
+    // ── USER COUNTS: rs_users is the source of truth (always accurate) ──
+    const allUsers = await sb('GET', 'rs_users', { select: 'plan,created_at' }) || [];
     const totalUsers = allUsers.length;
     const proUsers = allUsers.filter(u => u.plan === 'paid').length;
+    const freeUsers = totalUsers - proUsers;
+
+    // Signups = every registered user (the users table IS the signup record).
+    // We no longer rely on signup events, which only exist from when logging began.
+    const signups = totalUsers;
+    const subscribes = proUsers;
 
     const totalScripts = scriptEvents.length;
 
@@ -1048,7 +1056,7 @@ app.get('/api/admin/analytics', async (req, res) => {
         total_scripts: totalScripts,
         total_users: totalUsers,
         pro_users: proUsers,
-        free_users: totalUsers - proUsers,
+        free_users: freeUsers,
         total_signups: signups,
         total_subscriptions: subscribes,
         signup_to_pro_rate: signups ? ((subscribes / signups) * 100).toFixed(1) + '%' : '0%',
@@ -1098,6 +1106,13 @@ app.get(['/legal', '/terms', '/privacy', '/refund'], (req, res) => {
 ════════════════════════════════ */
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+/* ════════════════════════════════
+   TELEPROMPTER PAGE
+════════════════════════════════ */
+app.get('/teleprompter', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teleprompter.html'));
 });
 
 /* ════════════════════════════════

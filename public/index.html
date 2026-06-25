@@ -947,7 +947,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
         <div class="loading-state" id="d-loading"><div class="spinner"></div><div class="loading-msg" id="d-loading-msg">Crafting your hook…</div></div>
         <div class="script-result" id="d-result"></div>
       </div>
-      <div class="out-footer" id="d-footer" style="display:none;"><div class="out-footer-hint">💡 Read aloud once before recording. Adjust anything that doesn\'t sound like you.</div><button class="copy-btn-big" onclick="copyScript()">Copy Script</button></div>
+      <div class="out-footer" id="d-footer" style="display:none;"><div class="out-footer-hint">💡 Read aloud once before recording. Adjust anything that doesn\'t sound like you.</div><div style="display:flex;gap:8px;"><button class="copy-btn-big" style="background:var(--card);color:var(--ink);border:1.5px solid var(--border);" onclick="openTeleprompter()">📹 Teleprompter</button><button class="copy-btn-big" onclick="copyScript()">Copy Script</button></div></div>
       <!-- Desktop Feedback Bar -->
       <div class="feedback-bar" id="d-feedback-bar">
         <div class="feedback-label">✨ Improve this script</div>
@@ -1101,7 +1101,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
       <div class="script-result" id="m-result">
         <div class="out-header" style="border-radius:var(--r-lg) var(--r-lg) 0 0;"><div class="out-title" id="m-out-title">—</div><div class="out-acts"><button class="act-btn" onclick="copyScript()">📋 Copy</button><button class="act-btn" onclick="generate()">↩</button></div></div>
         <div style="background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r-lg) var(--r-lg);padding:18px 15px;min-height:100px;" id="m-result-body"></div>
-        <div class="out-footer" style="border-radius:0 0 var(--r-lg) var(--r-lg);margin-top:-1px;"><div class="out-footer-hint">💡 Read aloud once before recording.</div><button class="copy-btn-big" onclick="copyScript()">Copy</button></div>
+        <div class="out-footer" style="border-radius:0 0 var(--r-lg) var(--r-lg);margin-top:-1px;"><div class="out-footer-hint">💡 Read aloud once before recording.</div><div style="display:flex;gap:6px;"><button class="copy-btn-big" style="background:var(--card);color:var(--ink);border:1.5px solid var(--border);" onclick="openTeleprompter()">📹</button><button class="copy-btn-big" onclick="copyScript()">Copy</button></div></div>
         <!-- Mobile Feedback Bar -->
         <div class="feedback-bar" id="m-feedback-bar" style="border-radius:0 0 var(--r-lg) var(--r-lg);margin-top:2px;">
           <div class="feedback-label">✨ Improve this script</div>
@@ -3621,6 +3621,17 @@ async function copyScript() {
   if (!S.lastScript) { showToast('Nothing to copy yet!'); return; }
   try { await navigator.clipboard.writeText(S.lastScript); showToast('📋 Script copied!'); }
   catch { showToast('❌ Copy failed — select manually'); }
+}
+
+function openTeleprompter() {
+  if (!S.lastScript) { showToast('Generate a script first!'); return; }
+  try {
+    // Pass the script to the teleprompter page via sessionStorage
+    sessionStorage.setItem('rs_teleprompter_script', S.lastScript);
+    window.open('/teleprompter', '_blank');
+  } catch {
+    showToast('❌ Could not open teleprompter');
+  }
 }
 function showToast(msg) {
   const t=document.getElementById('toast');

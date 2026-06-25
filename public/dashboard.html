@@ -169,7 +169,7 @@ function render(d) {
         <div class="bar-track"><div class="bar-fill anon" style="width:100%"></div></div>
       </div>
       <div class="bar-row">
-        <div class="bar-head"><span class="bar-label">→ Signed up (free account)</span><span class="bar-value">${d.funnel.then_signed_up}</span></div>
+        <div class="bar-head"><span class="bar-label">→ Registered (total users)</span><span class="bar-value">${d.funnel.then_signed_up}</span></div>
         <div class="bar-track"><div class="bar-fill free" style="width:${d.funnel.anonymous_scripts ? Math.round((d.funnel.then_signed_up / d.funnel.anonymous_scripts) * 100) : 0}%"></div></div>
       </div>
       <div class="bar-row">
