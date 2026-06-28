@@ -267,6 +267,8 @@ textarea,input{font-family:'DM Sans',sans-serif;}
 .out-footer-hint{font-size:0.73rem;color:var(--muted);font-style:italic;}
 .copy-btn-big{background:var(--ink);color:#fff;border-radius:8px;padding:8px 16px;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .copy-btn-big:hover{background:var(--accent);}
+.record-btn-big{background:var(--accent);color:#fff;border-radius:8px;padding:8px 16px;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;border:none;}
+.record-btn-big:hover{background:#e04e00;}
 
 /* ── AUDIENCE TARGETING ── */
 .audience-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -947,22 +949,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
         <div class="loading-state" id="d-loading"><div class="spinner"></div><div class="loading-msg" id="d-loading-msg">Crafting your hook…</div></div>
         <div class="script-result" id="d-result"></div>
       </div>
-      <div class="out-footer" id="d-footer" style="display:none;"><div class="out-footer-hint">💡 Read aloud once before recording. Adjust anything that doesn\'t sound like you.</div><div style="display:flex;gap:8px;flex-wrap:wrap;">
-
-    <button
-        class="copy-btn-big"
-        onclick="copyScript()">
-        📋 Copy Script
-    </button>
-
-    <button
-        class="copy-btn-big"
-        style="background:var(--accent);color:#fff;"
-        onclick="openRecordingStudio()">
-        🎬 Record Video
-    </button>
-
-</div>
+      <div class="out-footer" id="d-footer" style="display:none;"><div class="out-footer-hint">💡 Read aloud once before recording. Adjust anything that doesn\'t sound like you.</div><div style="display:flex;gap:8px;"><button class="record-btn-big" style="background:var(--accent);color:#fff;" onclick="openTeleprompter()">🎬 Record Video</button><button class="copy-btn-big" onclick="copyScript()">📋 Copy Script</button></div></div>
       <!-- Desktop Feedback Bar -->
       <div class="feedback-bar" id="d-feedback-bar">
         <div class="feedback-label">✨ Improve this script</div>
@@ -1116,7 +1103,7 @@ textarea,input{font-family:'DM Sans',sans-serif;}
       <div class="script-result" id="m-result">
         <div class="out-header" style="border-radius:var(--r-lg) var(--r-lg) 0 0;"><div class="out-title" id="m-out-title">—</div><div class="out-acts"><button class="act-btn" onclick="copyScript()">📋 Copy</button><button class="act-btn" onclick="generate()">↩</button></div></div>
         <div style="background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r-lg) var(--r-lg);padding:18px 15px;min-height:100px;" id="m-result-body"></div>
-        <div class="out-footer" style="border-radius:0 0 var(--r-lg) var(--r-lg);margin-top:-1px;"><div class="out-footer-hint">💡 Read aloud once before recording.</div><div style="display:flex;gap:6px;"><button class="copy-btn-big" style="background:var(--card);color:var(--ink);border:1.5px solid var(--border);" onclick="openTeleprompter()">📹</button><button class="copy-btn-big" onclick="copyScript()">Copy</button></div></div>
+        <div class="out-footer" style="border-radius:0 0 var(--r-lg) var(--r-lg);margin-top:-1px;"><div class="out-footer-hint">💡 Read aloud once before recording.</div><div style="display:flex;gap:6px;"><button class="record-btn-big" style="background:var(--accent);color:#fff;" onclick="openTeleprompter()">🎬</button><button class="copy-btn-big" onclick="copyScript()">Copy</button></div></div>
         <!-- Mobile Feedback Bar -->
         <div class="feedback-bar" id="m-feedback-bar" style="border-radius:0 0 var(--r-lg) var(--r-lg);margin-top:2px;">
           <div class="feedback-label">✨ Improve this script</div>
@@ -1373,7 +1360,7 @@ const LANGS = {
       free:'Free · Secured · Powered by Claude AI',
       idleTitle:'Pick your platform & topic', idleSub:'Type any industry, describe your topic, and hit Generate.',
       check1:'✓ Scroll-stopping hook', check2:'✓ Scene-by-scene breakdown', check3:'✓ Platform-native CTA', check4:'✓ Caption + hashtags',
-      copy:'📋 Copy', redo:'↩ New', copyScript:'Copy Script',
+      copy:'📋 Copy', redo:'↩ New', copyScript:'Copy Script', recordVideo:'🎬 Record Video',
       footerHint:'💡 Read aloud once before recording. Adjust anything that doesn\'t sound like you.',
       tipsTitle:'Creator Tips',
       tip1title:'Hook in 2 seconds', tip1body:'Every platform decides in 2s if users stay. Open bold — fact, question, or hot take.',
@@ -1427,7 +1414,7 @@ const LANGS = {
       free:'Ọfẹ · Ailewu · Agbara nipasẹ Claude AI',
       idleTitle:'Yan pẹpẹ ati akọle rẹ', idleSub:'Tẹ ile-iṣẹ eyikeyi, ṣapejuwe akọle rẹ, ki o tẹ Ṣẹda.',
       check1:'✓ Ibẹrẹ ti o da duro skaanu', check2:'✓ Fifọ iṣẹlẹ si iṣẹlẹ', check3:'✓ CTA ti o dara fun pẹpẹ', check4:'✓ Akọwe + hashtags',
-      copy:'📋 Daakọ', redo:'↩ Tun Ṣe', copyScript:'Daakọ Iwe-afọwọkọ',
+      copy:'📋 Daakọ', redo:'↩ Tun Ṣe', copyScript:'Daakọ Iwe-afọwọkọ', recordVideo:'🎬 Ya Fidio',
       footerHint:'💡 Ka soke lẹẹkan ṣaaju gbigbasilẹ. Yi ohunkohun ti ko dun bi ẹ pada.',
       tipsTitle:'Awọn Imọran Onkọwe',
       tip1title:'Ifamọra ni iṣẹju 2', tip1body:'Gbogbo pẹpẹ pinnu ni 2s. Bẹrẹ ni igboya pẹlu otitọ tabi ibeere.',
@@ -1476,7 +1463,7 @@ const LANGS = {
       free:'Kyauta · Aminci · Ƙarfin Claude AI',
       idleTitle:'Zaɓi dandali da taken ka', idleSub:'Rubuta masana\'antu, bayyana taken ka, sannan danna Ƙirƙira.',
       check1:'✓ Farko mai tsayar da hankali', check2:'✓ Fashewar yanayi zuwa yanayi', check3:'✓ CTA na asali ga dandali', check4:'✓ Taken + hashtags',
-      copy:'📋 Kwafi', redo:'↩ Maimaita', copyScript:'Kwafi Rubutu',
+      copy:'📋 Kwafi', redo:'↩ Maimaita', copyScript:'Kwafi Rubutu', recordVideo:'🎬 Ɗauki Bidiyo',
       footerHint:'💡 Karanta da murya sau ɗaya kafin yin rikodin. Gyara duk wanda bai ji kamar kai ba.',
       tipsTitle:'Nasihohin Mai Ƙirƙira',
       tip1title:'Farko a cikin daƙiƙa 2', tip1body:'Kowane dandali yana yanke hukunci a cikin 2s. Fara da ƙarfi — gaskiya ko tambaya.',
@@ -1525,7 +1512,7 @@ const LANGS = {
       free:'Efu · Nchekwa · Ike nke Claude AI',
       idleTitle:'Họrọ ikpo okwu na isiokwu gị', idleSub:'Pịnye ụlọ ọrụ ọ bụla, kọwaa isiokwu gị, wee pịa Mepụta.',
       check1:'✓ Mmalite na-eme ka ndị ọrụ kwụsị', check2:'✓ Nkewa ihe niile oge n\'oge', check3:'✓ CTA nke ikpo okwu', check4:'✓ Nkọwa + hashtags',
-      copy:'📋 Detuo', redo:'↩ Mee ọzọ', copyScript:'Detuo Edemede',
+      copy:'📋 Detuo', redo:'↩ Mee ọzọ', copyScript:'Detuo Edemede', recordVideo:'🎬 Dekọọ Vidiyo',
       footerHint:'💡 Gụọ olu otu ugboro tupu ịdekọ. Gbanwee ihe ọ bụla adịghị dị ka gị.',
       tipsTitle:'Ndụmọdụ Onye Okike',
       tip1title:'Mmalite n\'ime sekọnd 2', tip1body:'Ikpo okwu ọ bụla na-ekpebi n\'ime 2s. Bido ike — eziokwu ma ọ bụ ajụjụ.',
@@ -1574,7 +1561,7 @@ const LANGS = {
       free:'Gratuit · Sécurisé · Propulsé par Claude AI',
       idleTitle:'Choisissez votre plateforme et sujet', idleSub:'Tapez n\'importe quel secteur, décrivez votre sujet et cliquez sur Générer.',
       check1:'✓ Accroche qui arrête le scroll', check2:'✓ Décomposition scène par scène', check3:'✓ CTA natif à la plateforme', check4:'✓ Légende + hashtags',
-      copy:'📋 Copier', redo:'↩ Refaire', copyScript:'Copier le Script',
+      copy:'📋 Copier', redo:'↩ Refaire', copyScript:'Copier le Script', recordVideo:'🎬 Enregistrer',
       footerHint:'💡 Lisez à voix haute une fois avant d\'enregistrer. Ajustez ce qui ne vous ressemble pas.',
       tipsTitle:'Conseils Créateurs',
       tip1title:'Accroche en 2 secondes', tip1body:'Chaque plateforme décide en 2s. Commencez fort — fait, question ou opinion forte.',
@@ -1623,7 +1610,7 @@ const LANGS = {
       free:'E Free · E Safe · Claude AI Power Am',
       idleTitle:'Pick platform and topic', idleSub:'Type any business, describe wetin you wan talk, hit Generate.',
       check1:'✓ Hook wey go stop people for dia track', check2:'✓ Scene by scene breakdown', check3:'✓ CTA wey fit di platform', check4:'✓ Caption + hashtags',
-      copy:'📋 Copy', redo:'↩ Do Am Again', copyScript:'Copy Script',
+      copy:'📋 Copy', redo:'↩ Do Am Again', copyScript:'Copy Script', recordVideo:'🎬 Record Video',
       footerHint:'💡 Read am loud once before you record. Change anything wey no sound like you.',
       tipsTitle:'Tips for Creator',
       tip1title:'Hook in 2 seconds', tip1body:'Every platform go decide in 2s. Start bold — fact, question, or hot take.',
@@ -1850,6 +1837,10 @@ function applyTranslations() {
     }
   });
   setAll('.copy-btn-big', (ui.copyScript || ui.copy || 'Copy').replace('📋 ',''));
+  // Record Video button — only relabel the desktop one (the mobile one is just the 🎬 icon)
+  document.querySelectorAll('.record-btn-big').forEach(btn => {
+    if (btn.textContent.trim().length > 2) btn.textContent = ui.recordVideo || '🎬 Record Video';
+  });
   setAll('.out-footer-hint', ui.footerHint);
 
   // ── Footer free text ──
@@ -3647,32 +3638,6 @@ function openTeleprompter() {
   } catch {
     showToast('❌ Could not open teleprompter');
   }
-}
-function openRecordingStudio() {
-
-    if (!S.lastScript) {
-        showToast("Generate a script first!");
-        return;
-    }
-
-    const recordingSession = {
-        script: S.lastScript,
-        title: S.lastTitle || "",
-        platform: S.platform || "",
-        industry: S.industry || "",
-        topic: S.topic || "",
-        tone: S.tone || "",
-        duration: S.duration || "",
-        createdAt: Date.now()
-    };
-
-    sessionStorage.setItem(
-        "rs_recording_session",
-        JSON.stringify(recordingSession)
-    );
-
-    window.open("/teleprompter", "_blank");
-
 }
 function showToast(msg) {
   const t=document.getElementById('toast');
