@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Teleprompter — ReelScript Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#000000"/>
+<title>Recording Studio — ReelScript Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -13,258 +14,397 @@
   --safe-t:env(safe-area-inset-top,0px);
   --safe-b:env(safe-area-inset-bottom,0px);
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:#000;color:#fff;-webkit-font-smoothing:antialiased;}
 
-/* ─── SETUP SCREEN ─── */
-.setup{max-width:680px;margin:0 auto;padding:calc(20px + var(--safe-t)) 18px 40px;height:100dvh;overflow-y:auto;}
-.setup-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--ink);display:flex;align-items:center;gap:8px;}
-.logo-mark{width:26px;height:26px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:800;color:#fff;}
-.back-link{color:var(--ink);font-size:0.8rem;font-weight:600;background:var(--card);border:1px solid var(--border);padding:7px 14px;border-radius:8px;text-decoration:none;}
+/* ─────────── SETUP SCREEN ─────────── */
+.setup{
+  position:fixed;inset:0;z-index:10;
+  background:var(--paper);color:var(--ink);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:calc(18px + var(--safe-t)) 16px calc(30px + var(--safe-b));
+  display:flex;flex-direction:column;
+}
+.setup.hidden{display:none;}
+.setup-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:0.95rem;display:flex;align-items:center;gap:8px;}
+.logo-mark{width:26px;height:26px;background:var(--accent);border-radius:7px;display:grid;place-items:center;font-size:0.6rem;font-weight:800;color:#fff;}
+.back-link{color:var(--ink);font-size:0.78rem;font-weight:600;background:var(--card);border:1px solid var(--border);padding:7px 13px;border-radius:8px;text-decoration:none;}
 
-h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.7rem;letter-spacing:-0.02em;margin-bottom:4px;}
-.sub{font-size:0.88rem;color:var(--muted);margin-bottom:22px;line-height:1.5;}
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.55rem;letter-spacing:-0.02em;line-height:1.1;margin-bottom:5px;}
+h1 em{color:var(--accent);font-style:normal;}
+.sub{font-size:0.85rem;color:var(--muted);margin-bottom:20px;line-height:1.5;}
 
-.field-label{font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:block;}
-.script-input{width:100%;min-height:200px;border:1.5px solid var(--border);border-radius:var(--r);padding:14px;font-size:0.95rem;line-height:1.6;font-family:'DM Sans',sans-serif;resize:vertical;background:var(--card);color:var(--ink);}
+.field-label{font-size:0.7rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:block;}
+.script-input{width:100%;min-height:150px;border:1.5px solid var(--border);border-radius:var(--r);padding:13px;font-size:16px;line-height:1.6;font-family:'DM Sans',sans-serif;resize:vertical;background:var(--card);color:var(--ink);}
 .script-input:focus{outline:none;border-color:var(--accent);}
 
-.syntax-help{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin:14px 0 22px;font-size:0.82rem;line-height:1.7;}
-.syntax-help strong{font-family:'Syne',sans-serif;}
-.syntax-tag{display:inline-block;padding:1px 7px;border-radius:5px;font-size:0.78rem;font-weight:600;margin:0 2px;}
-.syntax-tag.cue{background:var(--ink);color:#fff;}
-.syntax-tag.emph{background:#FFE3D3;color:var(--accent);}
-.syntax-tag.pause{background:var(--border);color:var(--ink2);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;}
+.row{display:flex;align-items:center;gap:10px;}
+.range-row{display:flex;align-items:center;gap:12px;}
+input[type=range]{flex:1;accent-color:var(--accent);height:5px;}
+.range-val{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;min-width:58px;text-align:right;}
 
-.controls-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;}
-.control-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;}
-.control-card .field-label{margin-bottom:10px;}
-.range-row{display:flex;align-items:center;gap:10px;}
-input[type=range]{flex:1;accent-color:var(--accent);height:4px;}
-.range-val{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;min-width:56px;text-align:right;}
+.start-btn{
+  width:100%;padding:16px;margin-top:6px;
+  background:var(--accent);color:#fff;border:none;border-radius:var(--r);
+  font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;cursor:pointer;
+  box-shadow:0 4px 20px rgba(255,92,0,0.3);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.start-btn:active{transform:scale(0.98);}
+.start-btn:disabled{background:#ccc;box-shadow:none;}
 
-.theme-row{display:flex;gap:8px;flex-wrap:wrap;}
-.theme-chip{border:2px solid var(--border);border-radius:8px;padding:7px 12px;font-size:0.76rem;font-weight:600;cursor:pointer;transition:all .15s;}
-.theme-chip.active{border-color:var(--accent);}
-.theme-chip[data-theme="amber"]{background:#1a1200;color:#FFB000;}
-.theme-chip[data-theme="green"]{background:#001a0d;color:#00FF7F;}
-.theme-chip[data-theme="white"]{background:#fff;color:#000;}
+.note{font-size:0.74rem;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5;}
+.flow-pill{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--border);border-radius:100px;padding:5px 11px;font-size:0.7rem;font-weight:600;color:var(--ink2);margin:0 3px 6px 0;}
+.flow-pill.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
-.toggle-row:last-child{border-bottom:none;}
-.toggle-label{font-size:0.88rem;font-weight:500;}
-.toggle-desc{font-size:0.74rem;color:var(--muted);margin-top:2px;}
-.switch{position:relative;width:46px;height:26px;flex-shrink:0;}
-.switch input{opacity:0;width:0;height:0;}
-.slider{position:absolute;inset:0;background:var(--border);border-radius:100px;cursor:pointer;transition:.2s;}
-.slider:before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
-.switch input:checked + .slider{background:var(--accent);}
-.switch input:checked + .slider:before{transform:translateX(20px);}
+/* ─────────── STUDIO (CAMERA) SCREEN ─────────── */
+.studio{position:fixed;inset:0;z-index:5;background:#000;display:none;}
+.studio.active{display:block;}
 
-.start-btn{width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 20px rgba(255,92,0,0.28);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;}
-.start-btn:hover{background:#e04e00;}
+#camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;}
+#camera.mirror{transform:scaleX(-1);}
 
-/* ─── PROMPTER SCREEN ─── */
-.prompter{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;background:#000;}
-.prompter.active{display:flex;}
-.prompter[data-theme="amber"]{background:#0a0700;}
-.prompter[data-theme="amber"] .prompter-text{color:#FFB000;}
-.prompter[data-theme="green"]{background:#000a05;}
-.prompter[data-theme="green"] .prompter-text{color:#00FF7F;}
-.prompter[data-theme="white"]{background:#fff;}
-.prompter[data-theme="white"] .prompter-text{color:#000;}
+/* Permission / error states */
+.cam-message{
+  position:absolute;inset:0;z-index:8;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:30px;gap:14px;background:#0a0a0a;
+}
+.cam-message.show{display:flex;}
+.cam-message .big-icon{font-size:3rem;}
+.cam-message h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1.2rem;}
+.cam-message p{font-size:0.88rem;color:#bbb;line-height:1.6;max-width:320px;}
+.cam-message button{
+  margin-top:8px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);
+  padding:13px 26px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;
+}
+.cam-message .ghost-btn{background:rgba(255,255,255,0.12);}
 
-.eye-line{position:absolute;top:30%;left:0;right:0;height:2px;background:var(--accent);z-index:5;pointer-events:none;box-shadow:0 0 20px rgba(255,92,0,0.5);}
-.eye-line.hidden{display:none;}
-.eye-line::before,.eye-line::after{content:'▶';position:absolute;top:50%;transform:translateY(-50%);color:var(--accent);font-size:0.7rem;}
-.eye-line::before{left:10px;}
-.eye-line::after{right:10px;content:'◀';}
+/* Teleprompter overlay (text over camera) */
+.tp-overlay{
+  position:absolute;left:0;right:0;
+  top:18%;bottom:20%;
+  z-index:6;overflow:hidden;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 14%,#000 86%,transparent 100%);
+  mask-image:linear-gradient(to bottom,transparent 0%,#000 14%,#000 86%,transparent 100%);
+}
+.tp-scroll{will-change:transform;padding:0 22px;}
+.tp-overlay.mirror .tp-scroll{transform-origin:center;}
+.tp-text{
+  max-width:640px;margin:0 auto;
+  font-size:30px;line-height:1.55;font-weight:600;
+  color:#fff;text-align:center;
+  text-shadow:0 2px 10px rgba(0,0,0,0.9),0 0 30px rgba(0,0,0,0.7);
+  letter-spacing:0.01em;
+}
+.tp-cue{display:inline-block;font-size:0.55em;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 10px;border-radius:100px;background:rgba(255,92,0,0.85);color:#fff;vertical-align:middle;margin:0 4px;text-shadow:none;}
+.tp-emphasis{color:#ffb37a;font-weight:800;}
+.tp-pause{display:flex;align-items:center;justify-content:center;gap:10px;margin:0.5em auto;max-width:260px;opacity:0.75;}
+.tp-pause span{font-size:0.42em;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#fff;}
+.tp-pause::before,.tp-pause::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.5);}
 
-.prompter-viewport{flex:1;overflow:hidden;position:relative;}
-.prompter-scroll{will-change:transform;}
-.prompter-mirror-active .prompter-scroll{transform:scaleX(-1);}
+/* Reading guide line at lens level */
+.lens-guide{
+  position:absolute;left:0;right:0;top:18%;z-index:7;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  pointer-events:none;
+}
+.lens-guide .eye{font-size:0.8rem;opacity:0.85;}
+.lens-guide .bar{height:2px;width:38px;background:var(--accent);box-shadow:0 0 14px rgba(255,92,0,0.7);border-radius:2px;}
+.lens-guide.hidden{display:none;}
 
-.prompter-text{max-width:650px;margin:0 auto;padding:30vh 40px 60vh;font-size:42px;line-height:1.5;font-weight:500;letter-spacing:0.01em;color:#fff;}
-.prompter-cue{display:inline-block;font-size:0.5em;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:2px 10px;border-radius:100px;background:rgba(255,92,0,0.25);color:var(--accent);vertical-align:middle;margin:0 4px;}
-.prompter[data-theme="white"] .prompter-cue{background:rgba(255,92,0,0.18);}
-.prompter-emphasis{background:rgba(255,92,0,0.22);padding:0 8px;border-radius:6px;font-weight:700;}
-.prompter-pause-block{display:flex;align-items:center;justify-content:center;margin:0.6em auto;max-width:300px;}
-.prompter-pause-block span{font-size:0.4em;font-weight:700;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;gap:10px;width:100%;}
-.prompter-pause-block span::before,.prompter-pause-block span::after{content:'';flex:1;height:1px;background:currentColor;opacity:0.4;}
+/* Top bar */
+.studio-top{
+  position:absolute;top:0;left:0;right:0;z-index:9;
+  padding:calc(12px + var(--safe-t)) 14px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to bottom,rgba(0,0,0,0.55),transparent);
+}
+.top-btn{
+  background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);
+  color:#fff;border:1px solid rgba(255,255,255,0.18);
+  border-radius:100px;padding:9px 14px;font-size:0.78rem;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:6px;min-height:40px;
+}
+.top-btn:active{background:rgba(0,0,0,0.65);}
 
-.prompter-bar{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 16px calc(14px + var(--safe-b));background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.1);flex-wrap:wrap;}
-.prompter[data-theme="white"] .prompter-bar{background:rgba(255,255,255,0.8);border-top:1px solid var(--border);}
-.pbar-btn{background:rgba(255,255,255,0.12);color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;min-height:44px;}
-.prompter[data-theme="white"] .pbar-btn{background:var(--ink);}
-.pbar-btn:hover{background:rgba(255,255,255,0.22);}
-.pbar-btn.primary{background:var(--accent);}
-.pbar-btn.primary:hover{background:#e04e00;}
-.pbar-speed{display:flex;align-items:center;gap:8px;color:#fff;font-size:0.78rem;}
-.prompter[data-theme="white"] .pbar-speed{color:var(--ink);}
-.pbar-speed input{width:90px;accent-color:var(--accent);}
+/* Bottom controls */
+.studio-bottom{
+  position:absolute;bottom:0;left:0;right:0;z-index:9;
+  padding:16px 16px calc(18px + var(--safe-b));
+  background:linear-gradient(to top,rgba(0,0,0,0.65),transparent);
+  display:flex;flex-direction:column;gap:12px;
+}
+.tp-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
+.ctrl-btn{
+  background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);
+  color:#fff;border:1px solid rgba(255,255,255,0.2);
+  border-radius:100px;padding:11px 18px;font-size:0.82rem;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:6px;min-height:46px;
+}
+.ctrl-btn:active{background:rgba(255,255,255,0.28);}
+.ctrl-btn.primary{background:var(--accent);border-color:var(--accent);}
+.speed-mini{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border-radius:100px;padding:6px 14px;border:1px solid rgba(255,255,255,0.15);}
+.speed-mini span{font-size:0.74rem;color:#fff;white-space:nowrap;}
+.speed-mini input{width:90px;accent-color:var(--accent);}
 
-.prompter-exit{position:absolute;top:calc(14px + var(--safe-t));right:16px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:100px;width:40px;height:40px;font-size:1.1rem;cursor:pointer;z-index:10;backdrop-filter:blur(8px);}
-.prompter[data-theme="white"] .prompter-exit{background:rgba(0,0,0,0.15);color:#000;}
-
-.countdown{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);}
+/* Countdown */
+.countdown{position:absolute;inset:0;z-index:12;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);}
 .countdown.active{display:flex;}
-.countdown-num{font-family:'Syne',sans-serif;font-weight:800;font-size:8rem;color:var(--accent);animation:pulse 1s ease infinite;}
-@keyframes pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.15);opacity:0.7;}}
+.countdown-num{font-family:'Syne',sans-serif;font-weight:800;font-size:7rem;color:#fff;text-shadow:0 4px 30px rgba(255,92,0,0.6);animation:pop 1s ease infinite;}
+@keyframes pop{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.18);opacity:0.65;}}
 
-@media(max-width:600px){
-  .controls-grid{grid-template-columns:1fr;}
-  .prompter-text{font-size:34px;padding-left:24px;padding-right:24px;}
-  h1{font-size:1.4rem;}
+/* Layer-1 badge */
+.dev-badge{
+  position:absolute;top:calc(64px + var(--safe-t));left:50%;transform:translateX(-50%);
+  z-index:8;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,0.15);border-radius:100px;
+  padding:5px 13px;font-size:0.68rem;color:rgba(255,255,255,0.7);font-weight:600;
+  pointer-events:none;
+}
+
+@media(min-width:800px){
+  .setup{max-width:680px;margin:0 auto;border-left:1px solid var(--border);border-right:1px solid var(--border);}
+  .tp-text{font-size:34px;}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══════════ SETUP SCREEN ═══════════ -->
+<!-- ════════ SETUP SCREEN ════════ -->
 <div class="setup" id="setup">
   <div class="setup-head">
-    <div class="logo"><span class="logo-mark">RS</span> Teleprompter</div>
+    <div class="logo"><span class="logo-mark">RS</span> Recording Studio</div>
     <a href="/" class="back-link">← Back to App</a>
   </div>
 
-  <h1>Read it like you wrote it</h1>
-  <p class="sub">Your script scrolls at your pace while you look straight at the camera.</p>
+  <h1>Record it like a <em>pro</em></h1>
+  <p class="sub">Your script scrolls over the camera while you look straight at the lens. Just like the big creators.</p>
+
+  <div style="margin-bottom:16px;">
+    <span class="flow-pill active">📝 Generate</span>
+    <span class="flow-pill active">🎬 Recording Session</span>
+    <span class="flow-pill">📹 Studio</span>
+    <span class="flow-pill">⏺ Record</span>
+    <span class="flow-pill">💾 Save</span>
+  </div>
 
   <label class="field-label">Your Script</label>
   <textarea class="script-input" id="script-input" placeholder="Paste or type your script here…"></textarea>
 
-  <div class="syntax-help">
-    <strong>Delivery cues</strong> — add these to guide your delivery:<br/>
-    <span class="syntax-tag cue">[Smile]</span> brackets → acting cue &nbsp;·&nbsp;
-    <span class="syntax-tag emph">*word*</span> asterisks → emphasis &nbsp;·&nbsp;
-    <span class="syntax-tag pause">(pause)</span> → a beat to breathe
-  </div>
-
-  <div class="controls-grid">
-    <div class="control-card">
-      <label class="field-label">Scroll Speed (WPM)</label>
-      <div class="range-row">
-        <input type="range" id="wpm" min="80" max="250" value="130" step="5" oninput="updateWpm()"/>
-        <span class="range-val" id="wpm-val">130</span>
-      </div>
-    </div>
-    <div class="control-card">
-      <label class="field-label">Font Size</label>
-      <div class="range-row">
-        <input type="range" id="fontsize" min="24" max="60" value="42" step="2" oninput="updateFont()"/>
-        <span class="range-val" id="fontsize-val">42px</span>
-      </div>
+  <div class="card" style="margin-top:14px;">
+    <label class="field-label">Scroll Speed</label>
+    <div class="range-row">
+      <input type="range" id="wpm" min="80" max="240" value="120" step="5" oninput="updateWpm()"/>
+      <span class="range-val" id="wpm-val">120 wpm</span>
     </div>
   </div>
 
-  <div class="control-card" style="margin-bottom:22px;">
-    <label class="field-label">Colour Theme</label>
-    <div class="theme-row">
-      <span class="theme-chip active" data-theme="amber" onclick="setTheme('amber',this)">Amber on Black</span>
-      <span class="theme-chip" data-theme="green" onclick="setTheme('green',this)">Green on Black</span>
-      <span class="theme-chip" data-theme="white" onclick="setTheme('white',this)">Black on White</span>
+  <div class="card">
+    <label class="field-label">Text Size</label>
+    <div class="range-row">
+      <input type="range" id="fontsize" min="20" max="46" value="30" step="2" oninput="updateFont()"/>
+      <span class="range-val" id="fontsize-val">30px</span>
     </div>
   </div>
 
-  <div class="control-card" style="margin-bottom:22px;">
-    <div class="toggle-row">
+  <div class="card">
+    <div class="row" style="justify-content:space-between;">
       <div>
-        <div class="toggle-label">Mirror Mode</div>
-        <div class="toggle-desc">Flip text for glass teleprompters</div>
+        <div style="font-size:0.9rem;font-weight:600;">Front camera (selfie)</div>
+        <div style="font-size:0.74rem;color:var(--muted);margin-top:2px;">Turn off to use the back camera</div>
       </div>
-      <label class="switch"><input type="checkbox" id="mirror"/><span class="slider"></span></label>
-    </div>
-    <div class="toggle-row">
-      <div>
-        <div class="toggle-label">Eye-Line Guide</div>
-        <div class="toggle-desc">Show the reading indicator bar</div>
-      </div>
-      <label class="switch"><input type="checkbox" id="eyeline" checked/><span class="slider"></span></label>
-    </div>
-    <div class="toggle-row">
-      <div>
-        <div class="toggle-label">3-Second Countdown</div>
-        <div class="toggle-desc">Get ready before scrolling starts</div>
-      </div>
-      <label class="switch"><input type="checkbox" id="countdown-toggle" checked/><span class="slider"></span></label>
+      <label style="position:relative;width:46px;height:26px;flex-shrink:0;">
+        <input type="checkbox" id="frontcam" checked style="opacity:0;width:0;height:0;"/>
+        <span class="slider" style="position:absolute;inset:0;background:var(--accent);border-radius:100px;cursor:pointer;transition:.2s;"></span>
+      </label>
     </div>
   </div>
 
-  <button class="start-btn" onclick="startPrompter()"><span>▶</span> Start Teleprompter</button>
+  <button class="start-btn" onclick="startStudio()"><span>📹</span> Open Camera</button>
+  <p class="note">We'll ask for camera permission. Nothing is recorded or uploaded in this step — this is your live preview with the teleprompter.</p>
 </div>
 
-<!-- ═══════════ PROMPTER SCREEN ═══════════ -->
-<div class="prompter" id="prompter" data-theme="amber">
-  <button class="prompter-exit" onclick="exitPrompter()">✕</button>
-  <div class="eye-line" id="eye-line"></div>
-  <div class="prompter-viewport" id="viewport">
-    <div class="prompter-scroll" id="scroll">
-      <div class="prompter-text" id="prompter-text"></div>
+<!-- ════════ STUDIO / CAMERA SCREEN ════════ -->
+<div class="studio" id="studio">
+  <video id="camera" autoplay playsinline muted></video>
+
+  <!-- Permission prompt / error -->
+  <div class="cam-message" id="cam-message">
+    <div class="big-icon" id="cam-icon">📷</div>
+    <h2 id="cam-title">Camera permission needed</h2>
+    <p id="cam-desc">Tap below and allow camera access so you can see yourself while reading.</p>
+    <button onclick="requestCamera()" id="cam-action">Enable Camera</button>
+    <button class="ghost-btn" onclick="exitStudio()">← Go Back</button>
+  </div>
+
+  <!-- Reading guide -->
+  <div class="lens-guide" id="lens-guide">
+    <span class="eye">👁</span><div class="bar"></div><span style="font-size:0.68rem;color:rgba(255,255,255,0.8);">look here</span><div class="bar"></div><span class="eye">👁</span>
+  </div>
+
+  <!-- Teleprompter text overlay -->
+  <div class="tp-overlay" id="tp-overlay">
+    <div class="tp-scroll" id="tp-scroll">
+      <div class="tp-text" id="tp-text"></div>
     </div>
   </div>
+
+  <div class="dev-badge">Layer 1 · Preview (recording comes next)</div>
+
+  <!-- Top bar -->
+  <div class="studio-top">
+    <button class="top-btn" onclick="exitStudio()">✕ Exit</button>
+    <button class="top-btn" onclick="flipCamera()">🔄 Flip</button>
+  </div>
+
+  <!-- Countdown -->
   <div class="countdown" id="countdown"><div class="countdown-num" id="countdown-num">3</div></div>
-  <div class="prompter-bar">
-    <button class="pbar-btn primary" id="play-btn" onclick="togglePlay()">⏸ Pause</button>
-    <button class="pbar-btn" onclick="restartScroll()">↺ Restart</button>
-    <div class="pbar-speed">
-      <span>Speed</span>
-      <input type="range" id="live-wpm" min="80" max="250" value="130" step="5" oninput="liveWpm()"/>
-      <span id="live-wpm-val">130</span>
+
+  <!-- Bottom controls -->
+  <div class="studio-bottom">
+    <div class="speed-mini" style="align-self:center;">
+      <span>🐢</span>
+      <input type="range" id="live-wpm" min="80" max="240" value="120" step="5" oninput="liveWpm()"/>
+      <span>🐇</span>
+    </div>
+    <div class="tp-controls">
+      <button class="ctrl-btn" onclick="restartScroll()">↺ Restart</button>
+      <button class="ctrl-btn primary" id="play-btn" onclick="togglePlay()">▶ Start</button>
+      <button class="ctrl-btn" onclick="toggleGuide()">👁 Guide</button>
     </div>
   </div>
 </div>
 
 <script>
 const P = {
-  wpm:130, fontSize:42, theme:'amber', mirror:false, eyeline:true, countdown:true,
-  playing:false, rafId:null, scrollY:0, pausedForBlock:false, lastTime:0,
+  wpm:120, fontSize:30, frontCam:true, mirror:true,
+  playing:false, rafId:null, scrollY:0, lastTime:0, pausedForBlock:false,
+  stream:null,
 };
 
-/* SYNTAX COMPILER */
-function compileScriptToPrompter(rawScriptText){
-  if(!rawScriptText) return "";
-  return rawScriptText
+/* ── Compile script syntax → HTML ── */
+function compileScript(raw){
+  if(!raw) return "";
+  return raw
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\[(.*?)\]/g,'<span class="prompter-cue" data-action="cue">$1</span>')
-    .replace(/\*(.*?)\*/g,'<span class="prompter-emphasis" data-action="highlight">$1</span>')
-    .replace(/\(pause\)/gi,'<div class="prompter-pause-block" data-action="pause" data-pause="1500"><span>PAUSE</span></div>')
+    .replace(/\[(.*?)\]/g,'<span class="tp-cue">$1</span>')
+    .replace(/\*(.*?)\*/g,'<span class="tp-emphasis">$1</span>')
+    .replace(/\(pause\)/gi,'<div class="tp-pause" data-pause="1400"><span>pause</span></div>')
     .replace(/\n/g,'<br/>');
 }
 
-/* SETUP CONTROLS */
-function updateWpm(){ P.wpm=+document.getElementById('wpm').value; document.getElementById('wpm-val').textContent=P.wpm; }
+/* ── Setup controls ── */
+function updateWpm(){ P.wpm=+document.getElementById('wpm').value; document.getElementById('wpm-val').textContent=P.wpm+' wpm'; }
 function updateFont(){ P.fontSize=+document.getElementById('fontsize').value; document.getElementById('fontsize-val').textContent=P.fontSize+'px'; }
-function setTheme(theme,el){ P.theme=theme; document.querySelectorAll('.theme-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); }
 
-/* START */
-function startPrompter(){
+/* ── Start: open studio, then request camera ── */
+async function startStudio(){
   const raw=document.getElementById('script-input').value;
   if(!raw.trim()){ alert('Please add a script first.'); return; }
-  P.mirror=document.getElementById('mirror').checked;
-  P.eyeline=document.getElementById('eyeline').checked;
-  P.countdown=document.getElementById('countdown-toggle').checked;
+  P.frontCam=document.getElementById('frontcam').checked;
+  P.mirror=P.frontCam; // mirror only for selfie cam
 
-  const prompter=document.getElementById('prompter');
-  const textEl=document.getElementById('prompter-text');
-  textEl.innerHTML=compileScriptToPrompter(raw);
+  // Prepare text
+  const textEl=document.getElementById('tp-text');
+  textEl.innerHTML=compileScript(raw);
   textEl.style.fontSize=P.fontSize+'px';
-  prompter.dataset.theme=P.theme;
-  prompter.classList.toggle('prompter-mirror-active',P.mirror);
-  document.getElementById('eye-line').classList.toggle('hidden',!P.eyeline);
 
+  // Sync live speed slider
   document.getElementById('live-wpm').value=P.wpm;
-  document.getElementById('live-wpm-val').textContent=P.wpm;
 
+  // Show studio
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('studio').classList.add('active');
+
+  // Reset scroll
   P.scrollY=0;
-  document.getElementById('scroll').style.transform='translateY(0px)';
-  prompter.classList.add('active');
-  if(prompter.requestFullscreen) prompter.requestFullscreen().catch(()=>{});
+  document.getElementById('tp-scroll').style.transform='translateY(0px)';
 
-  if(P.countdown) runCountdown(()=>beginScroll());
-  else beginScroll();
+  await requestCamera();
 }
 
+/* ── Camera permission + stream ── */
+async function requestCamera(){
+  const msg=document.getElementById('cam-message');
+  const video=document.getElementById('camera');
+
+  // Check support
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showCamMessage('🚫','Camera not supported','Your browser doesn\'t support camera access. Try Chrome or Safari on a modern phone.','',false);
+    return;
+  }
+
+  // Stop any existing stream
+  if(P.stream){ P.stream.getTracks().forEach(t=>t.stop()); P.stream=null; }
+
+  try{
+    msg.classList.remove('show'); // hide message while trying
+    const constraints={
+      audio:false, // Layer 1: no audio needed for preview
+      video:{
+        facingMode: P.frontCam ? 'user' : 'environment',
+        width:{ideal:1280}, height:{ideal:720},
+      }
+    };
+    const stream=await navigator.mediaDevices.getUserMedia(constraints);
+    P.stream=stream;
+    video.srcObject=stream;
+    video.classList.toggle('mirror', P.mirror);
+    await video.play().catch(()=>{});
+  }catch(err){
+    // Permission denied or no camera
+    if(err.name==='NotAllowedError' || err.name==='PermissionDeniedError'){
+      showCamMessage('🔒','Camera blocked','You denied camera access. To fix: tap the 🔒 lock icon in your browser\'s address bar, allow Camera, then reload.','Try Again',true);
+    } else if(err.name==='NotFoundError'){
+      showCamMessage('📷','No camera found','We couldn\'t find a camera on this device.','Try Again',true);
+    } else {
+      showCamMessage('⚠️','Camera error',(err.message||'Something went wrong starting the camera.'),'Try Again',true);
+    }
+  }
+}
+
+function showCamMessage(icon,title,desc,actionLabel,showAction){
+  document.getElementById('cam-icon').textContent=icon;
+  document.getElementById('cam-title').textContent=title;
+  document.getElementById('cam-desc').textContent=desc;
+  const actionBtn=document.getElementById('cam-action');
+  if(showAction && actionLabel){ actionBtn.style.display='block'; actionBtn.textContent=actionLabel; }
+  else actionBtn.style.display='none';
+  document.getElementById('cam-message').classList.add('show');
+}
+
+/* ── Flip camera ── */
+async function flipCamera(){
+  P.frontCam=!P.frontCam;
+  P.mirror=P.frontCam;
+  await requestCamera();
+}
+
+/* ── Exit back to setup ── */
+function exitStudio(){
+  stopScroll();
+  if(P.stream){ P.stream.getTracks().forEach(t=>t.stop()); P.stream=null; }
+  document.getElementById('camera').srcObject=null;
+  document.getElementById('studio').classList.remove('active');
+  document.getElementById('setup').classList.remove('hidden');
+  document.getElementById('cam-message').classList.remove('show');
+}
+
+/* ── Scroll mechanics ── */
+function togglePlay(){
+  const btn=document.getElementById('play-btn');
+  if(P.playing){ stopScroll(); btn.textContent='▶ Resume'; }
+  else {
+    // countdown only on first start (scrollY at top)
+    if(P.scrollY===0){ runCountdown(()=>beginScroll()); }
+    else beginScroll();
+    btn.textContent='⏸ Pause';
+  }
+}
 function runCountdown(done){
   const overlay=document.getElementById('countdown');
   const num=document.getElementById('countdown-num');
@@ -276,86 +416,67 @@ function runCountdown(done){
     else num.textContent=n;
   },1000);
 }
-
-function exitPrompter(){
-  stopScroll();
-  document.getElementById('prompter').classList.remove('active');
-  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
-}
-
-/* SCROLL MECHANICS */
 function beginScroll(){
   P.playing=true; P.lastTime=performance.now();
   document.getElementById('play-btn').textContent='⏸ Pause';
   P.rafId=requestAnimationFrame(scrollLoop);
 }
-
 function scrollLoop(now){
   if(!P.playing) return;
   const dt=(now-P.lastTime)/1000; P.lastTime=now;
   if(!P.pausedForBlock){
-    const lineHeight=P.fontSize*1.5;
-    const wordsPerLine=8;
+    const lineHeight=P.fontSize*1.55;
+    const wordsPerLine=7;
     const linesPerSec=(P.wpm/wordsPerLine)/60;
     const pxPerSec=linesPerSec*lineHeight;
     P.scrollY+=pxPerSec*dt;
-    document.getElementById('scroll').style.transform=`translateY(-${P.scrollY}px)`;
+    document.getElementById('tp-scroll').style.transform=`translateY(-${P.scrollY}px)`;
     checkPauseBlocks();
-    const textEl=document.getElementById('prompter-text');
-    if(P.scrollY>textEl.scrollHeight){ stopScroll(); document.getElementById('play-btn').textContent='↺ Done'; return; }
+    const textEl=document.getElementById('tp-text');
+    if(P.scrollY>textEl.scrollHeight+100){ stopScroll(); document.getElementById('play-btn').textContent='↺ Restart'; return; }
   }
   P.rafId=requestAnimationFrame(scrollLoop);
 }
-
 function checkPauseBlocks(){
-  const eyeLineY=window.innerHeight*0.30;
-  document.querySelectorAll('.prompter-pause-block:not([data-done])').forEach(block=>{
+  const guideY=window.innerHeight*0.18;
+  document.querySelectorAll('.tp-pause:not([data-done])').forEach(block=>{
     const rect=block.getBoundingClientRect();
-    if(rect.top<=eyeLineY && rect.top>eyeLineY-40){
+    if(rect.top<=guideY && rect.top>guideY-50){
       block.setAttribute('data-done','1');
-      const pauseMs=+block.dataset.pause||1500;
+      const ms=+block.dataset.pause||1400;
       P.pausedForBlock=true;
-      setTimeout(()=>{ P.pausedForBlock=false; },pauseMs);
+      setTimeout(()=>{ P.pausedForBlock=false; },ms);
     }
   });
-}
-
-function togglePlay(){
-  const btn=document.getElementById('play-btn');
-  if(P.playing){ stopScroll(); btn.textContent='▶ Play'; }
-  else{ beginScroll(); btn.textContent='⏸ Pause'; }
 }
 function stopScroll(){ P.playing=false; if(P.rafId) cancelAnimationFrame(P.rafId); }
 function restartScroll(){
   stopScroll(); P.scrollY=0;
-  document.getElementById('scroll').style.transform='translateY(0px)';
-  document.querySelectorAll('.prompter-pause-block').forEach(b=>b.removeAttribute('data-done'));
+  document.getElementById('tp-scroll').style.transform='translateY(0px)';
+  document.querySelectorAll('.tp-pause').forEach(b=>b.removeAttribute('data-done'));
   P.pausedForBlock=false;
-  if(P.countdown) runCountdown(()=>beginScroll()); else beginScroll();
+  document.getElementById('play-btn').textContent='▶ Start';
 }
-function liveWpm(){ P.wpm=+document.getElementById('live-wpm').value; document.getElementById('live-wpm-val').textContent=P.wpm; }
+function liveWpm(){ P.wpm=+document.getElementById('live-wpm').value; }
 
-/* KEYBOARD SHORTCUTS */
-document.addEventListener('keydown',e=>{
-  if(!document.getElementById('prompter').classList.contains('active')) return;
-  if(e.code==='Space'){ e.preventDefault(); togglePlay(); }
-  if(e.code==='Escape') exitPrompter();
-  if(e.code==='ArrowUp'){ P.scrollY=Math.max(0,P.scrollY-50); document.getElementById('scroll').style.transform=`translateY(-${P.scrollY}px)`; }
-  if(e.code==='ArrowDown'){ P.scrollY+=50; document.getElementById('scroll').style.transform=`translateY(-${P.scrollY}px)`; }
-});
+/* ── Toggle reading guide ── */
+function toggleGuide(){
+  document.getElementById('lens-guide').classList.toggle('hidden');
+}
 
-/* ─── LOAD SCRIPT PASSED FROM THE APP ─── */
-(function loadIncomingScript(){
+/* ── Load script passed from the app ── */
+(function loadIncoming(){
   try{
-    // Script is passed via sessionStorage (set by the main app before opening)
-    const incoming = sessionStorage.getItem('rs_teleprompter_script');
+    const incoming=sessionStorage.getItem('rs_teleprompter_script');
     if(incoming){
-      document.getElementById('script-input').value = incoming;
+      document.getElementById('script-input').value=incoming;
       sessionStorage.removeItem('rs_teleprompter_script');
     }
   }catch(e){}
 })();
-</script>
 
+/* ── Clean up camera if page hidden/closed ── */
+window.addEventListener('pagehide',()=>{ if(P.stream) P.stream.getTracks().forEach(t=>t.stop()); });
+</script>
 </body>
 </html>
