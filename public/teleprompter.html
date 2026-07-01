@@ -10,6 +10,7 @@
 :root{
   --ink:#0D0D0D;--ink2:#2A2A2A;--paper:#F2EFE9;--accent:#FF5C00;
   --green:#00A86B;--muted:#6B6B6B;--card:#FFFFFF;--border:#E2DDD6;
+  --red:#E5383B;
   --r:12px;--r-lg:18px;
   --safe-t:env(safe-area-inset-top,0px);
   --safe-b:env(safe-area-inset-bottom,0px);
@@ -86,13 +87,12 @@ input[type=range]{flex:1;accent-color:var(--accent);height:5px;}
 /* Teleprompter overlay (text over camera) */
 .tp-overlay{
   position:absolute;left:0;right:0;
-  top:18%;bottom:20%;
+  top:18%;bottom:24%;
   z-index:6;overflow:hidden;
   -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 14%,#000 86%,transparent 100%);
   mask-image:linear-gradient(to bottom,transparent 0%,#000 14%,#000 86%,transparent 100%);
 }
 .tp-scroll{will-change:transform;padding:0 22px;}
-.tp-overlay.mirror .tp-scroll{transform-origin:center;}
 .tp-text{
   max-width:640px;margin:0 auto;
   font-size:30px;line-height:1.55;font-weight:600;
@@ -131,25 +131,57 @@ input[type=range]{flex:1;accent-color:var(--accent);height:5px;}
 }
 .top-btn:active{background:rgba(0,0,0,0.65);}
 
+/* REC indicator */
+.rec-indicator{
+  position:absolute;top:calc(14px + var(--safe-t));left:50%;transform:translateX(-50%);
+  z-index:11;display:none;align-items:center;gap:7px;
+  background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);
+  border:1px solid rgba(229,56,59,0.5);border-radius:100px;
+  padding:7px 15px;
+}
+.rec-indicator.on{display:flex;}
+.rec-dot{width:10px;height:10px;background:var(--red);border-radius:50%;animation:blink 1.1s ease infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.25;}}
+.rec-time{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;color:#fff;letter-spacing:0.03em;}
+
 /* Bottom controls */
 .studio-bottom{
   position:absolute;bottom:0;left:0;right:0;z-index:9;
-  padding:16px 16px calc(18px + var(--safe-b));
-  background:linear-gradient(to top,rgba(0,0,0,0.65),transparent);
+  padding:14px 16px calc(16px + var(--safe-b));
+  background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);
   display:flex;flex-direction:column;gap:12px;
 }
-.tp-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
-.ctrl-btn{
-  background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);
-  color:#fff;border:1px solid rgba(255,255,255,0.2);
-  border-radius:100px;padding:11px 18px;font-size:0.82rem;font-weight:600;
-  cursor:pointer;display:flex;align-items:center;gap:6px;min-height:46px;
-}
-.ctrl-btn:active{background:rgba(255,255,255,0.28);}
-.ctrl-btn.primary{background:var(--accent);border-color:var(--accent);}
-.speed-mini{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border-radius:100px;padding:6px 14px;border:1px solid rgba(255,255,255,0.15);}
+.speed-mini{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border-radius:100px;padding:6px 14px;border:1px solid rgba(255,255,255,0.15);align-self:center;}
 .speed-mini span{font-size:0.74rem;color:#fff;white-space:nowrap;}
 .speed-mini input{width:90px;accent-color:var(--accent);}
+
+.controls-row{display:flex;align-items:center;justify-content:center;gap:22px;}
+.side-btn{
+  background:rgba(255,255,255,0.14);backdrop-filter:blur(8px);
+  color:#fff;border:1px solid rgba(255,255,255,0.2);
+  border-radius:50%;width:52px;height:52px;
+  font-size:1.15rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:1px;
+}
+.side-btn small{font-size:0.5rem;font-weight:600;letter-spacing:0.02em;}
+.side-btn:active{background:rgba(255,255,255,0.28);}
+
+/* Big record button */
+.record-btn{
+  width:76px;height:76px;border-radius:50%;
+  background:transparent;border:4px solid #fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;position:relative;flex-shrink:0;
+}
+.record-btn .core{
+  width:58px;height:58px;border-radius:50%;
+  background:var(--red);transition:all .22s ease;
+}
+.record-btn.recording .core{
+  width:30px;height:30px;border-radius:8px;
+}
+.record-btn:active .core{transform:scale(0.92);}
 
 /* Countdown */
 .countdown{position:absolute;inset:0;z-index:12;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);}
@@ -157,14 +189,40 @@ input[type=range]{flex:1;accent-color:var(--accent);height:5px;}
 .countdown-num{font-family:'Syne',sans-serif;font-weight:800;font-size:7rem;color:#fff;text-shadow:0 4px 30px rgba(255,92,0,0.6);animation:pop 1s ease infinite;}
 @keyframes pop{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.18);opacity:0.65;}}
 
-/* Layer-1 badge */
-.dev-badge{
-  position:absolute;top:calc(64px + var(--safe-t));left:50%;transform:translateX(-50%);
-  z-index:8;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);
-  border:1px solid rgba(255,255,255,0.15);border-radius:100px;
-  padding:5px 13px;font-size:0.68rem;color:rgba(255,255,255,0.7);font-weight:600;
-  pointer-events:none;
+/* ─────────── REVIEW SCREEN ─────────── */
+.review{
+  position:fixed;inset:0;z-index:20;background:#000;
+  display:none;flex-direction:column;
 }
+.review.active{display:flex;}
+.review-head{
+  padding:calc(14px + var(--safe-t)) 16px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(0,0,0,0.6);
+}
+.review-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;}
+.review-video-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#050505;}
+#review-video{max-width:100%;max-height:100%;background:#000;}
+.review-actions{
+  padding:14px 16px calc(18px + var(--safe-b));
+  display:flex;flex-direction:column;gap:10px;
+  background:rgba(0,0,0,0.7);
+}
+.review-btn{
+  width:100%;padding:15px;border-radius:var(--r);border:none;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.review-btn.save{background:var(--green);color:#fff;box-shadow:0 4px 18px rgba(0,168,107,0.35);}
+.review-btn.again{background:rgba(255,255,255,0.14);color:#fff;border:1px solid rgba(255,255,255,0.2);}
+.review-btn:active{transform:scale(0.98);}
+.review-size{text-align:center;font-size:0.72rem;color:#999;}
+.save-hint{
+  display:none;text-align:center;font-size:0.76rem;color:#8fd6b8;
+  background:rgba(0,168,107,0.12);border:1px solid rgba(0,168,107,0.3);
+  border-radius:var(--r);padding:10px 14px;line-height:1.5;
+}
+.save-hint.show{display:block;}
 
 @media(min-width:800px){
   .setup{max-width:680px;margin:0 auto;border-left:1px solid var(--border);border-right:1px solid var(--border);}
@@ -182,14 +240,14 @@ input[type=range]{flex:1;accent-color:var(--accent);height:5px;}
   </div>
 
   <h1>Record it like a <em>pro</em></h1>
-  <p class="sub">Your script scrolls over the camera while you look straight at the lens. Just like the big creators.</p>
+  <p class="sub">Your script scrolls over the camera while you record yourself. Then save the video straight to your phone.</p>
 
   <div style="margin-bottom:16px;">
     <span class="flow-pill active">📝 Generate</span>
     <span class="flow-pill active">🎬 Recording Session</span>
-    <span class="flow-pill">📹 Studio</span>
-    <span class="flow-pill">⏺ Record</span>
-    <span class="flow-pill">💾 Save</span>
+    <span class="flow-pill active">📹 Studio</span>
+    <span class="flow-pill active">⏺ Record</span>
+    <span class="flow-pill active">💾 Save</span>
   </div>
 
   <label class="field-label">Your Script</label>
@@ -225,7 +283,7 @@ input[type=range]{flex:1;accent-color:var(--accent);height:5px;}
   </div>
 
   <button class="start-btn" onclick="startStudio()"><span>📹</span> Open Camera</button>
-  <p class="note">We'll ask for camera permission. Nothing is recorded or uploaded in this step — this is your live preview with the teleprompter.</p>
+  <p class="note">We'll ask for camera <strong>and microphone</strong> permission so your voice is recorded. Videos save to your device only — nothing is uploaded to our servers.</p>
 </div>
 
 <!-- ════════ STUDIO / CAMERA SCREEN ════════ -->
@@ -236,9 +294,15 @@ input[type=range]{flex:1;accent-color:var(--accent);height:5px;}
   <div class="cam-message" id="cam-message">
     <div class="big-icon" id="cam-icon">📷</div>
     <h2 id="cam-title">Camera permission needed</h2>
-    <p id="cam-desc">Tap below and allow camera access so you can see yourself while reading.</p>
+    <p id="cam-desc">Tap below and allow camera + microphone access.</p>
     <button onclick="requestCamera()" id="cam-action">Enable Camera</button>
     <button class="ghost-btn" onclick="exitStudio()">← Go Back</button>
+  </div>
+
+  <!-- REC indicator -->
+  <div class="rec-indicator" id="rec-indicator">
+    <div class="rec-dot"></div>
+    <span class="rec-time" id="rec-time">0:00</span>
   </div>
 
   <!-- Reading guide -->
@@ -253,12 +317,10 @@ input[type=range]{flex:1;accent-color:var(--accent);height:5px;}
     </div>
   </div>
 
-  <div class="dev-badge">Layer 1 · Preview (recording comes next)</div>
-
   <!-- Top bar -->
   <div class="studio-top">
-    <button class="top-btn" onclick="exitStudio()">✕ Exit</button>
-    <button class="top-btn" onclick="flipCamera()">🔄 Flip</button>
+    <button class="top-btn" onclick="exitStudio()" id="exit-btn">✕ Exit</button>
+    <button class="top-btn" onclick="flipCamera()" id="flip-btn">🔄 Flip</button>
   </div>
 
   <!-- Countdown -->
@@ -266,16 +328,33 @@ input[type=range]{flex:1;accent-color:var(--accent);height:5px;}
 
   <!-- Bottom controls -->
   <div class="studio-bottom">
-    <div class="speed-mini" style="align-self:center;">
+    <div class="speed-mini">
       <span>🐢</span>
       <input type="range" id="live-wpm" min="80" max="240" value="120" step="5" oninput="liveWpm()"/>
       <span>🐇</span>
     </div>
-    <div class="tp-controls">
-      <button class="ctrl-btn" onclick="restartScroll()">↺ Restart</button>
-      <button class="ctrl-btn primary" id="play-btn" onclick="togglePlay()">▶ Start</button>
-      <button class="ctrl-btn" onclick="toggleGuide()">👁 Guide</button>
+    <div class="controls-row">
+      <button class="side-btn" onclick="restartScroll()" title="Restart script"><span>↺</span><small>script</small></button>
+      <div class="record-btn" id="record-btn" onclick="toggleRecord()"><div class="core"></div></div>
+      <button class="side-btn" id="tp-toggle-btn" onclick="togglePlay()" title="Play/pause script"><span id="tp-toggle-icon">▶</span><small>script</small></button>
     </div>
+  </div>
+</div>
+
+<!-- ════════ REVIEW SCREEN ════════ -->
+<div class="review" id="review">
+  <div class="review-head">
+    <div class="review-title">🎬 Your Take</div>
+    <button class="top-btn" onclick="closeReview()">✕</button>
+  </div>
+  <div class="review-video-wrap">
+    <video id="review-video" controls playsinline></video>
+  </div>
+  <div class="review-actions">
+    <div class="save-hint" id="save-hint">✅ Saved! Check your Downloads or Files app. On iPhone it may open the share sheet — choose "Save Video".</div>
+    <button class="review-btn save" onclick="saveVideo()">💾 Save to Device</button>
+    <button class="review-btn again" onclick="recordAgain()">🔄 Record Again</button>
+    <div class="review-size" id="review-size"></div>
   </div>
 </div>
 
@@ -284,6 +363,10 @@ const P = {
   wpm:120, fontSize:30, frontCam:true, mirror:true,
   playing:false, rafId:null, scrollY:0, lastTime:0, pausedForBlock:false,
   stream:null,
+  // Layer 2: recording state
+  recorder:null, chunks:[], recording:false,
+  recTimer:null, recSeconds:0,
+  lastBlob:null, lastUrl:null, lastExt:'webm',
 };
 
 /* ── Compile script syntax → HTML ── */
@@ -306,45 +389,39 @@ async function startStudio(){
   const raw=document.getElementById('script-input').value;
   if(!raw.trim()){ alert('Please add a script first.'); return; }
   P.frontCam=document.getElementById('frontcam').checked;
-  P.mirror=P.frontCam; // mirror only for selfie cam
+  P.mirror=P.frontCam;
 
-  // Prepare text
   const textEl=document.getElementById('tp-text');
   textEl.innerHTML=compileScript(raw);
   textEl.style.fontSize=P.fontSize+'px';
 
-  // Sync live speed slider
   document.getElementById('live-wpm').value=P.wpm;
 
-  // Show studio
   document.getElementById('setup').classList.add('hidden');
   document.getElementById('studio').classList.add('active');
 
-  // Reset scroll
   P.scrollY=0;
   document.getElementById('tp-scroll').style.transform='translateY(0px)';
 
   await requestCamera();
 }
 
-/* ── Camera permission + stream ── */
+/* ── Camera + mic permission + stream ── */
 async function requestCamera(){
   const msg=document.getElementById('cam-message');
   const video=document.getElementById('camera');
 
-  // Check support
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
     showCamMessage('🚫','Camera not supported','Your browser doesn\'t support camera access. Try Chrome or Safari on a modern phone.','',false);
     return;
   }
 
-  // Stop any existing stream
   if(P.stream){ P.stream.getTracks().forEach(t=>t.stop()); P.stream=null; }
 
   try{
-    msg.classList.remove('show'); // hide message while trying
+    msg.classList.remove('show');
     const constraints={
-      audio:false, // Layer 1: no audio needed for preview
+      audio:true, // Layer 2: capture voice
       video:{
         facingMode: P.frontCam ? 'user' : 'environment',
         width:{ideal:1280}, height:{ideal:720},
@@ -356,9 +433,8 @@ async function requestCamera(){
     video.classList.toggle('mirror', P.mirror);
     await video.play().catch(()=>{});
   }catch(err){
-    // Permission denied or no camera
     if(err.name==='NotAllowedError' || err.name==='PermissionDeniedError'){
-      showCamMessage('🔒','Camera blocked','You denied camera access. To fix: tap the 🔒 lock icon in your browser\'s address bar, allow Camera, then reload.','Try Again',true);
+      showCamMessage('🔒','Permission blocked','Camera or microphone was denied. Tap the 🔒 lock icon in your browser\'s address bar, allow Camera and Microphone, then reload.','Try Again',true);
     } else if(err.name==='NotFoundError'){
       showCamMessage('📷','No camera found','We couldn\'t find a camera on this device.','Try Again',true);
     } else {
@@ -377,8 +453,9 @@ function showCamMessage(icon,title,desc,actionLabel,showAction){
   document.getElementById('cam-message').classList.add('show');
 }
 
-/* ── Flip camera ── */
+/* ── Flip camera (disabled while recording) ── */
 async function flipCamera(){
+  if(P.recording){ return; } // can't flip mid-recording
   P.frontCam=!P.frontCam;
   P.mirror=P.frontCam;
   await requestCamera();
@@ -386,6 +463,10 @@ async function flipCamera(){
 
 /* ── Exit back to setup ── */
 function exitStudio(){
+  if(P.recording){
+    if(!confirm('Stop recording and exit? This take will be lost.')) return;
+    forceStopRecording(false);
+  }
   stopScroll();
   if(P.stream){ P.stream.getTracks().forEach(t=>t.stop()); P.stream=null; }
   document.getElementById('camera').srcObject=null;
@@ -394,15 +475,141 @@ function exitStudio(){
   document.getElementById('cam-message').classList.remove('show');
 }
 
-/* ── Scroll mechanics ── */
+/* ══════════ LAYER 2: RECORDING ══════════ */
+
+/* Pick the best supported format for this device */
+function pickMimeType(){
+  const candidates=[
+    'video/mp4',                          // Safari / iPhone
+    'video/webm;codecs=vp9,opus',         // Chrome
+    'video/webm;codecs=vp8,opus',
+    'video/webm',
+  ];
+  for(const m of candidates){
+    if(window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
+  }
+  return ''; // let the browser decide
+}
+
+function toggleRecord(){
+  if(P.recording) stopRecording();
+  else startRecording();
+}
+
+function startRecording(){
+  if(!P.stream){ showCamMessage('📷','Camera not ready','Enable the camera first, then record.','Enable Camera',true); return; }
+  if(!window.MediaRecorder){
+    showCamMessage('🚫','Recording not supported','Your browser can\'t record video. Update your browser or try Chrome/Safari.','',false);
+    return;
+  }
+
+  // 3-2-1 countdown, then record + auto-start teleprompter
+  runCountdown(()=>{
+    const mime=pickMimeType();
+    P.lastExt = mime.includes('mp4') ? 'mp4' : 'webm';
+    try{
+      P.recorder = mime ? new MediaRecorder(P.stream,{mimeType:mime}) : new MediaRecorder(P.stream);
+    }catch(e){
+      P.recorder = new MediaRecorder(P.stream);
+      P.lastExt='webm';
+    }
+    P.chunks=[];
+    P.recorder.ondataavailable = e => { if(e.data && e.data.size>0) P.chunks.push(e.data); };
+    P.recorder.onstop = onRecordingStopped;
+    P.recorder.start(1000); // gather data every second
+    P.recording=true;
+
+    // UI
+    document.getElementById('record-btn').classList.add('recording');
+    document.getElementById('rec-indicator').classList.add('on');
+    document.getElementById('flip-btn').style.opacity='0.4';
+    P.recSeconds=0; updateRecTime();
+    P.recTimer=setInterval(()=>{ P.recSeconds++; updateRecTime(); },1000);
+
+    // Auto-start the teleprompter from the top
+    restartScrollSilent();
+    beginScroll();
+  });
+}
+
+function stopRecording(){
+  if(!P.recording || !P.recorder) return;
+  P.recording=false;
+  stopScroll();
+  clearInterval(P.recTimer);
+  document.getElementById('record-btn').classList.remove('recording');
+  document.getElementById('rec-indicator').classList.remove('on');
+  document.getElementById('flip-btn').style.opacity='1';
+  try{ P.recorder.stop(); }catch(e){}
+}
+
+function forceStopRecording(showReview){
+  P.recording=false;
+  clearInterval(P.recTimer);
+  document.getElementById('record-btn').classList.remove('recording');
+  document.getElementById('rec-indicator').classList.remove('on');
+  if(P.recorder && P.recorder.state!=='inactive'){
+    P.recorder.onstop = showReview ? onRecordingStopped : null;
+    try{ P.recorder.stop(); }catch(e){}
+  }
+}
+
+function onRecordingStopped(){
+  if(!P.chunks.length){ return; }
+  const type = P.lastExt==='mp4' ? 'video/mp4' : 'video/webm';
+  P.lastBlob = new Blob(P.chunks, {type});
+  if(P.lastUrl) URL.revokeObjectURL(P.lastUrl);
+  P.lastUrl = URL.createObjectURL(P.lastBlob);
+
+  // Show review screen
+  const rv=document.getElementById('review-video');
+  rv.src=P.lastUrl;
+  const mb=(P.lastBlob.size/1048576).toFixed(1);
+  document.getElementById('review-size').textContent=`${formatTime(P.recSeconds)} · ${mb} MB · .${P.lastExt}`;
+  document.getElementById('save-hint').classList.remove('show');
+  document.getElementById('review').classList.add('active');
+}
+
+function updateRecTime(){
+  document.getElementById('rec-time').textContent=formatTime(P.recSeconds);
+}
+function formatTime(s){
+  const m=Math.floor(s/60), sec=s%60;
+  return m+':'+String(sec).padStart(2,'0');
+}
+
+/* ── Review actions ── */
+function saveVideo(){
+  if(!P.lastBlob) return;
+  const a=document.createElement('a');
+  a.href=P.lastUrl;
+  const stamp=new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
+  a.download=`reelscript-video-${stamp}.${P.lastExt}`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  document.getElementById('save-hint').classList.add('show');
+}
+
+function recordAgain(){
+  document.getElementById('review').classList.remove('active');
+  const rv=document.getElementById('review-video');
+  rv.pause(); rv.src='';
+  restartScrollSilent();
+}
+
+function closeReview(){
+  const rv=document.getElementById('review-video');
+  rv.pause();
+  document.getElementById('review').classList.remove('active');
+}
+
+/* ══════════ TELEPROMPTER SCROLL ══════════ */
 function togglePlay(){
-  const btn=document.getElementById('play-btn');
-  if(P.playing){ stopScroll(); btn.textContent='▶ Resume'; }
+  if(P.playing){ stopScroll(); }
   else {
-    // countdown only on first start (scrollY at top)
-    if(P.scrollY===0){ runCountdown(()=>beginScroll()); }
+    if(P.scrollY===0 && !P.recording){ runCountdown(()=>beginScroll()); }
     else beginScroll();
-    btn.textContent='⏸ Pause';
   }
 }
 function runCountdown(done){
@@ -418,7 +625,7 @@ function runCountdown(done){
 }
 function beginScroll(){
   P.playing=true; P.lastTime=performance.now();
-  document.getElementById('play-btn').textContent='⏸ Pause';
+  document.getElementById('tp-toggle-icon').textContent='⏸';
   P.rafId=requestAnimationFrame(scrollLoop);
 }
 function scrollLoop(now){
@@ -433,7 +640,7 @@ function scrollLoop(now){
     document.getElementById('tp-scroll').style.transform=`translateY(-${P.scrollY}px)`;
     checkPauseBlocks();
     const textEl=document.getElementById('tp-text');
-    if(P.scrollY>textEl.scrollHeight+100){ stopScroll(); document.getElementById('play-btn').textContent='↺ Restart'; return; }
+    if(P.scrollY>textEl.scrollHeight+100){ stopScroll(); return; }
   }
   P.rafId=requestAnimationFrame(scrollLoop);
 }
@@ -449,13 +656,19 @@ function checkPauseBlocks(){
     }
   });
 }
-function stopScroll(){ P.playing=false; if(P.rafId) cancelAnimationFrame(P.rafId); }
+function stopScroll(){
+  P.playing=false;
+  if(P.rafId) cancelAnimationFrame(P.rafId);
+  document.getElementById('tp-toggle-icon').textContent='▶';
+}
 function restartScroll(){
+  restartScrollSilent();
+}
+function restartScrollSilent(){
   stopScroll(); P.scrollY=0;
   document.getElementById('tp-scroll').style.transform='translateY(0px)';
   document.querySelectorAll('.tp-pause').forEach(b=>b.removeAttribute('data-done'));
   P.pausedForBlock=false;
-  document.getElementById('play-btn').textContent='▶ Start';
 }
 function liveWpm(){ P.wpm=+document.getElementById('live-wpm').value; }
 
@@ -476,7 +689,10 @@ function toggleGuide(){
 })();
 
 /* ── Clean up camera if page hidden/closed ── */
-window.addEventListener('pagehide',()=>{ if(P.stream) P.stream.getTracks().forEach(t=>t.stop()); });
+window.addEventListener('pagehide',()=>{
+  if(P.recording) forceStopRecording(false);
+  if(P.stream) P.stream.getTracks().forEach(t=>t.stop());
+});
 </script>
 </body>
 </html>
