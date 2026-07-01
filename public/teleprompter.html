@@ -202,7 +202,7 @@ input[type=range]{flex:1;accent-color:var(--accent);height:5px;}
 }
 .review-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;}
 .review-video-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#050505;}
-#review-video{max-width:100%;max-height:100%;background:#000;}
+#review-video{width:100%;height:100%;object-fit:contain;background:#000;}
 .review-actions{
   padding:14px 16px calc(18px + var(--safe-b));
   display:flex;flex-direction:column;gap:10px;
@@ -564,6 +564,24 @@ function onRecordingStopped(){
   // Show review screen
   const rv=document.getElementById('review-video');
   rv.src=P.lastUrl;
+
+  // FIX: recorded blobs often report Infinity duration and show a blank
+  // preview. Seeking to a huge time forces the browser to compute the real
+  // duration; seeking back to 0 renders the first frame.
+  rv.onloadedmetadata = () => {
+    if (rv.duration === Infinity || isNaN(rv.duration)) {
+      rv.currentTime = 1e101;
+      rv.ontimeupdate = () => {
+        rv.ontimeupdate = null;
+        rv.currentTime = 0;
+      };
+    } else {
+      // Nudge to render the first frame as the preview
+      rv.currentTime = 0.01;
+    }
+  };
+  rv.load();
+
   const mb=(P.lastBlob.size/1048576).toFixed(1);
   document.getElementById('review-size').textContent=`${formatTime(P.recSeconds)} · ${mb} MB · .${P.lastExt}`;
   document.getElementById('save-hint').classList.remove('show');
